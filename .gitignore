@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.ty/
+node_modules/
+
+# Local runtime state and generated credentials
+vaalboks-data/
+shared/
+db.sqlite3
+certs/
+
+# Local editor and OS files
+.DS_Store
+.idea/
+.vscode/

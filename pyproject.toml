@@ -1,0 +1,64 @@
+[project]
+name = "vaalboks"
+version = "0.1.0"
+description = "Simple local-network file sharing over HTTPS"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.14"
+authors = [{ name = "vaalboks contributors" }]
+keywords = ["django", "file-sharing", "lan", "self-hosted"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Framework :: Django",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+dependencies = [
+    "cryptography>=46.0.0",
+    "django>=6.1.1",
+    "gunicorn>=26.2.0",
+    "uvicorn-worker>=0.4.0",
+    "whitenoise>=6.12.0",
+    "zstandard>=0.25.0",
+]
+
+[project.scripts]
+vaalboks = "vaalboks.cli:main"
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["vaalboks", "vaalboks.*", "share", "share.*"]
+
+[tool.setuptools.package-data]
+share = ["templates/**/*.html", "static/**/*"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+extend-exclude = ["shared", "vaalboks-data", "build", "certs"]
+
+#[tool.ruff.lint]
+#select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["manage.py", "vaalboks", "share"]
+exclude = ["shared/**", "vaalboks-data/**", "build/**"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.6",
+    "ty>=0.0.78",
+]

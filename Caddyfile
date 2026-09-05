@@ -1,0 +1,17 @@
+# Optional HTTP/2 + zstd front end.
+# Requires Caddy installed locally: https://caddyserver.com/
+#
+# Start Django with:
+#   uv run gunicorn vaalboks.asgi:application \
+#     --worker-class uvicorn_worker.UvicornWorker \
+#     --workers 2 --bind 127.0.0.1:8124
+# Then start Caddy with:
+#   caddy run --config Caddyfile
+#
+# Caddy creates a self-signed local CA certificate for this HTTPS endpoint.
+# Trust that CA on the personal devices used to access the share.
+:8443 {
+    tls internal
+    encode zstd
+    reverse_proxy 127.0.0.1:8124
+}

@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vaalboks — LAN file share</title>
+  <link rel="icon" href="{% static 'share/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'share/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'share/app.css' %}">
+  <script src="{% static 'share/htmx.min.js' %}"></script>
+</head>
+<body>
+<main>
+  <img class="brand-logo" src="{% static 'share/logo.svg' %}" alt="vaalboks">
+  <h1><span class="subtitle">local file share</span></h1>
+
+  <div id="dropzone">
+    <p class="big">Drop files or folders here</p>
+    <p>or click to browse</p>
+    <input type="file" id="file-input" multiple hidden>
+  </div>
+
+  <div id="progress-wrap">
+    <progress id="progress" max="100" value="0"></progress>
+    <div id="progress-label">Uploading…</div>
+  </div>
+
+  <div id="stats">
+    <span>↑ uploaded <b id="stat-up-total">0 B</b></span>
+    <span>↓ downloaded <b id="stat-down-total">0 B</b></span>
+    <span>last upload <b id="stat-up-speed">–</b></span>
+    <span>last download <b id="stat-down-speed">–</b></span>
+  </div>
+
+  <div id="file-list"
+       hx-get="{% url 'list-files' %}"
+       hx-trigger="load, fileschanged from:body"
+       hx-swap="innerHTML"></div>
+</main>
+
+<script src="{% static 'share/app.js' %}" defer></script>
+</body>
+</html>

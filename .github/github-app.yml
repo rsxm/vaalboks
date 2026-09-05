@@ -1,0 +1,21 @@
+instructions: |
+  This is a Django 6.1 project using Python 3.14 and uv.
+  Use the vaalboks CLI for the packaged server and keep frontend changes
+  build-free: HTML, CSS, and JavaScript only.
+  The integrated browser preview uses the HTTP development server on port
+  8123. Do not expose or log GitHub credentials.
+
+scripts:
+  - name: Setup
+    command: uv sync --all-groups && npm ci
+    triggers:
+      - session.create
+  - name: Run web preview
+    command: uv run vaalboks --http --host 127.0.0.1 --port 8123
+
+server_ready_pattern: 'Listening at:'
+auto_open_in_browser: true
+
+automation:
+  auto_issue_session: true
+  remote_control: false

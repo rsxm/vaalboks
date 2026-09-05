@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" role="img" aria-labelledby="title desc">
+  <title id="title">vaalboks</title>
+  <desc id="desc">A quiet cardboard box with a simple local network symbol.</desc>
+  <rect width="640" height="240" rx="28" fill="#f1f2f4"/>
+  <g transform="translate(44 48)">
+    <path d="m0 42 92-34 92 34-92 36z" fill="#c4a77d"/>
+    <path d="m0 42v88l92 40V78z" fill="#ab8e66"/>
+    <path d="m184 42v88l-92 40V78z" fill="#927852"/>
+    <path d="m92 78 92-36v88l-92 40z" fill="#a88a62"/>
+    <path d="M92 78v92M46 25l92 38" fill="none" stroke="#ead9bb" stroke-width="7" stroke-linecap="round"/>
+    <g fill="#5d6673" stroke="#f1f2f4" stroke-width="5">
+      <circle cx="92" cy="112" r="10"/>
+      <circle cx="51" cy="137" r="10"/>
+      <circle cx="133" cy="137" r="10"/>
+    </g>
+    <path d="M92 112 51 137M92 112l41 25" fill="none" stroke="#5d6673" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <text x="270" y="137" fill="#343a43" font-family="system-ui,-apple-system,sans-serif" font-size="68" font-weight="650" letter-spacing="-2">vaalboks</text>
+  <circle cx="588" cy="112" r="7" fill="#4f7cff"/>
+</svg>
