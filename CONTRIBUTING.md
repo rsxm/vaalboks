@@ -6,7 +6,7 @@ Python 3.14 and uv are required. Install dependencies and quality tools with:
 
 ```sh
 uv sync --all-groups
-npm ci
+bun install --frozen-lockfile
 ```
 
 Run the application locally:
@@ -24,7 +24,7 @@ uv run ruff check .
 uv run ruff format --check .
 uv run ty check
 uv run python manage.py test
-npm run check
+bun run check
 ```
 
 Keep changes focused, add regression tests for behavior changes, and do not

@@ -7,7 +7,7 @@ instructions: |
 
 scripts:
   - name: Setup
-    command: uv sync --all-groups && npm ci
+    command: uv sync --all-groups && bun install --frozen-lockfile
     triggers:
       - session.create
   - name: Run web preview
