@@ -1,7 +1,16 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
   "files": {
-    "includes": ["share/static/share/app.js"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!share/static/share/vendor",
+      "!.venv",
+      "!build",
+      "!dist",
+      "!vaalboks-data",
+      "!share/templates"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -12,7 +21,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "suspicious": {
+        "noRedundantUseStrict": "off"
+      }
     }
   },
   "javascript": {

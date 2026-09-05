@@ -4,13 +4,13 @@
   "description": "A simple local-network file sharing server. Drag files **or folders** onto the page to share them with anyone on the LAN; everything lands in `shared/`.",
   "main": "index.js",
   "scripts": {
-    "check": "biome check share/static/share/app.js",
+    "check": "biome check .",
     "format": "biome format --write ."
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^2.5.12"
   }

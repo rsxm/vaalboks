@@ -1,0 +1,46 @@
+version: 2
+
+multi-ecosystem-groups:
+  infrastructure:
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: '06:00'
+    commit-message:
+      prefix: ''
+    target-branch: main
+    labels:
+      - dependencies
+      - infrastructure
+
+updates:
+  - package-ecosystem: uv
+    directory: /
+    target-branch: main
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: '06:00'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: ''
+      prefix-development: ''
+    groups:
+      python-production:
+        patterns: ['*']
+        dependency-type: production
+      python-development:
+        patterns: ['*']
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    multi-ecosystem-group: infrastructure
+    patterns: ['*']
+  - package-ecosystem: bun
+    directory: /
+    multi-ecosystem-group: infrastructure
+    patterns: ['*']
