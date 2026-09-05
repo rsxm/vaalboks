@@ -14,7 +14,7 @@ between computers without a separate hosted service.
 ## Stack
 
 - Python 3.14, Django 6.1, uv
-- Frontend: plain HTML/CSS/JS + htmx 4.0 (vendored, no build step, no CDN)
+- Frontend: plain HTML/CSS/JS + htmx 4.0
 - Uploads use XHR for live progress and speed tracking; downloads use streaming
   `fetch`
 
@@ -42,8 +42,8 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 
 ## Direct Gunicorn HTTPS + zstd
 
-For a direct version without Caddy, Gunicorn can terminate HTTPS and Django
-compresses eligible text responses with zstd:
+Gunicorn can terminate HTTPS, and Django compresses eligible text responses
+with zstd:
 
 ```sh
 uv run gunicorn vaalboks.asgi:application \
@@ -56,7 +56,6 @@ uv run gunicorn vaalboks.asgi:application \
 
 Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
 each device that will connect. This setup provides HTTPS and zstd compression.
-Gunicorn does not provide HTTP/2; use the Caddy setup below if HTTP/2 is needed.
 
 The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
 `--certfile`, and `--keyfile`.
@@ -73,18 +72,6 @@ The repository includes GitHub Actions for quality checks and publishing on a
 published GitHub release. Configure PyPI trusted publishing for the GitHub
 repository before creating the first release; no long-lived PyPI token is
 required.
-
-## Optional Caddy HTTP/2 front end
-
-The included `Caddyfile` provides HTTP/2, HTTPS, and zstd at the edge while
-Gunicorn remains an internal HTTP/1.1 ASGI server:
-
-```sh
-uv run gunicorn vaalboks.asgi:application \
-  --worker-class uvicorn_worker.UvicornWorker \
-  --workers 2 --bind 127.0.0.1:8124
-caddy run --config Caddyfile
-```
 
 ## How it works
 
