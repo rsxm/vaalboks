@@ -19,7 +19,7 @@ class SharingTests(TestCase):
     def test_upload_and_download_preserve_relative_path(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with override_settings(SHARED_ROOT=root):
+            with override_settings(VAALBOKS_SHARED_ROOT=root):
                 response = self.client.post(
                     "/api/upload/",
                     {

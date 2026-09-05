@@ -41,6 +41,35 @@ uv run python manage.py runserver 0.0.0.0:8123
 Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 (Find your IP with `ipconfig getifaddr en0`.)
 
+## Use as a Django app
+
+The file-sharing interface can also be mounted in an existing Django project.
+Install `vaalboks`, add `share` to `INSTALLED_APPS`, configure the directory
+used for uploads, and include the app URLs:
+
+```python
+# settings.py
+INSTALLED_APPS = [
+    # ...
+    "share",
+]
+
+VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
+```
+
+```python
+# urls.py
+from django.urls import include, path
+
+urlpatterns = [
+    path("share/", include("share.urls")),
+]
+```
+
+The app does not require the bundled `vaalboks` settings, middleware, or
+server. The host project remains responsible for Django middleware, static
+files, CSRF, and deployment configuration.
+
 ## Direct Gunicorn HTTPS + zstd
 
 This section applies to Linux and macOS. Windows users should use the `vaalboks`

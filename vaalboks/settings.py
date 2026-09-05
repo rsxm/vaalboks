@@ -139,8 +139,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = RUNTIME_DIR / "staticfiles"
 
-# Directory whose contents are shared / where uploads land
-SHARED_ROOT = RUNTIME_DIR / "shared"
+# Directory whose contents are shared / where uploads land. This is the
+# setting consumed by the reusable share app.
+VAALBOKS_SHARED_ROOT = RUNTIME_DIR / "shared"
+SHARED_ROOT = VAALBOKS_SHARED_ROOT
 
 # Allow large uploads on the LAN
 DATA_UPLOAD_MAX_NUMBER_FILES = None

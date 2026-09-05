@@ -2,6 +2,8 @@ from django.urls import path
 
 from . import views
 
+app_name = "share"
+
 urlpatterns = [
     path("", views.index, name="index"),
     path("api/files/", views.list_files, name="list-files"),

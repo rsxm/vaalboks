@@ -34,7 +34,7 @@
   </div>
 
   <div id="file-list"
-       hx-get="{% url 'list-files' %}"
+       hx-get="{% url 'share:list-files' %}"
        hx-trigger="load, fileschanged from:body"
        hx-swap="innerHTML"></div>
 </main>

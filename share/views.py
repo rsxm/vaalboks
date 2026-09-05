@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import BinaryIO
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -15,7 +16,14 @@ def _open_binary(path: Path) -> BinaryIO:
 
 
 def _shared_root() -> Path:
-    root = Path(settings.SHARED_ROOT).resolve()
+    configured_root = getattr(settings, "VAALBOKS_SHARED_ROOT", None)
+    if configured_root is None:
+        configured_root = getattr(settings, "SHARED_ROOT", None)
+    if configured_root is None:
+        raise ImproperlyConfigured(
+            "Set VAALBOKS_SHARED_ROOT to the directory used for shared files."
+        )
+    root = Path(configured_root).resolve()
     root.mkdir(parents=True, exist_ok=True)
     return root
 

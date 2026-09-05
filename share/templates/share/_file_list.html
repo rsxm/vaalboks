@@ -6,7 +6,7 @@
                 type="button"
                 aria-expanded="false"
                 {% if e.has_children %}
-                hx-get="{% url 'list-files' %}?path={{ e.relpath|urlencode }}"
+                hx-get="{% url 'share:list-files' %}?path={{ e.relpath|urlencode }}"
                 hx-target="next .children"
                 hx-swap="innerHTML"
                 hx-trigger="click once"
@@ -20,7 +20,7 @@
   {% else %}
     <div class="row file">
       <span class="icon">📄</span>
-      <a class="name" href="{% url 'download' e.relpath %}">{{ e.name }}</a>
+      <a class="name" href="{% url 'share:download' e.relpath %}">{{ e.name }}</a>
       <span class="size">{{ e.size }}</span>
     </div>
   {% endif %}
