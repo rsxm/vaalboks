@@ -6,7 +6,8 @@
 
 Vaalboks is a small file-sharing server for a local network. Drop files or
 folders in the browser, then download them from another device on the same
-network.
+network. It also supports sharing short text snippets between connected
+computers.
 
 The name is Afrikaans for “dull box” — a straightforward tool for moving files
 between computers without a separate hosted service.
@@ -113,4 +114,14 @@ required.
 - `GET /api/files/` — htmx partial that re-renders the listing after uploads
 - `POST /api/upload/` — multipart upload; folders are traversed client-side
   (`webkitGetAsEntry`) and each file is sent with its relative path
+- `GET /api/clipboard/` — list shared clipboard entries
+- `POST /api/clipboard/add/` — append a text entry from the clipboard panel
+- `POST /api/clipboard/<id>/delete/` — delete one clipboard entry
+- `POST /api/clipboard/clear/` — delete all clipboard entries
 - `GET /files/<path>` — download a shared file (path-traversal protected)
+
+Clipboard entries are stored as plain-text JSON lines in
+`vaalboks-data/shared/clipboard.jsonl` (or the configured shared root). The
+browser uses explicit Paste and Copy buttons because browser clipboard access
+requires user permission. The file inherits the same local-network privacy
+model as other shared files.

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import mimetypes
 from pathlib import Path
 from typing import BinaryIO
@@ -9,6 +10,8 @@ from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
+
+from .clipboard import append_entry, clear_entries, delete_entry, list_entries
 
 
 def _open_binary(path: Path) -> BinaryIO:
@@ -51,7 +54,7 @@ def _build_entries(rel_dir: str = "") -> list[dict]:
         raise Http404("Not a directory")
     entries = []
     for item in sorted(directory.iterdir(), key=lambda p: (p.is_file(), p.name.lower())):
-        if item.name.startswith("."):
+        if item.name.startswith(".") or item.name == "clipboard.jsonl":
             continue
         item_relpath = str(Path(rel_dir) / item.name) if rel_dir else item.name
         if item.is_dir():
@@ -104,6 +107,39 @@ def upload(request):
             out.writelines(f.chunks())
         saved += 1
     return JsonResponse({"saved": saved})
+
+
+def clipboard(request):
+    entries, revision = list_entries(_shared_root())
+    return JsonResponse({"entries": entries, "revision": revision})
+
+
+@require_POST
+def clipboard_add(request):
+    try:
+        payload = json.loads(request.body)
+        text = payload["text"]
+        if not isinstance(text, str):
+            raise TypeError
+        entry = append_entry(_shared_root(), text)
+    except json.JSONDecodeError, KeyError, TypeError:
+        return JsonResponse({"error": "request must contain a text string"}, status=400)
+    except ValueError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    return JsonResponse({"entry": entry}, status=201)
+
+
+@require_POST
+def clipboard_delete(request, entry_id: str):
+    if not delete_entry(_shared_root(), entry_id):
+        raise Http404("Clipboard entry not found")
+    return JsonResponse({"deleted": entry_id})
+
+
+@require_POST
+def clipboard_clear(request):
+    clear_entries(_shared_root())
+    return JsonResponse({"cleared": True})
 
 
 async def download(request, relpath: str):

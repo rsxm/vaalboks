@@ -18,6 +18,7 @@ const statUpSpeed = document.getElementById("stat-up-speed");
 const statDownSpeed = document.getElementById("stat-down-speed");
 let uploadedBytes = 0;
 let downloadedBytes = 0;
+let clipboardRevision = null;
 
 function csrfToken() {
   const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
@@ -33,6 +34,160 @@ function fmtBytes(n) {
   }
   return `${i === 0 ? n : n.toFixed(1)} ${units[i]}`;
 }
+
+const clipboardInput = document.getElementById("clipboard-input");
+const clipboardList = document.getElementById("clipboard-list");
+const clipboardStatus = document.getElementById("clipboard-status");
+const clipboardDialog = document.getElementById("clipboard-dialog");
+const clipboardDialogText = document.getElementById("clipboard-dialog-text");
+
+function clipboardMessage(message, isError = false) {
+  clipboardStatus.textContent = message;
+  clipboardStatus.classList.toggle("error", isError);
+}
+
+async function clipboardRequest(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (options.method && options.method !== "GET") {
+    headers["X-CSRFToken"] = csrfToken();
+    headers["Content-Type"] = "application/json";
+  }
+  const response = await fetch(url, { ...options, headers });
+  if (!response.ok) {
+    throw new Error((await response.json()).error || `HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+function renderClipboard(entries) {
+  clipboardList.replaceChildren();
+  if (entries.length === 0) {
+    clipboardList.innerHTML =
+      '<p class="clipboard-empty">No shared text yet.</p>';
+    return;
+  }
+  for (const entry of entries) {
+    const item = document.createElement("article");
+    item.className = "clipboard-entry";
+    const text = document.createElement("pre");
+    text.className = "clipboard-entry-text";
+    text.textContent = entry.text;
+    const actions = document.createElement("div");
+    actions.className = "clipboard-entry-actions";
+    const view = document.createElement("button");
+    view.type = "button";
+    view.className = "icon-button secondary";
+    view.setAttribute("aria-label", "View full clipboard entry");
+    view.title = "View full text";
+    view.textContent = "↗";
+    view.addEventListener("click", () => {
+      clipboardDialogText.textContent = entry.text;
+      clipboardDialog.showModal();
+    });
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "icon-button";
+    copy.setAttribute("aria-label", "Copy clipboard entry");
+    copy.title = "Copy";
+    copy.textContent = "⧉";
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(entry.text);
+        clipboardMessage("Copied to this device.");
+      } catch {
+        clipboardMessage(
+          "Copy was blocked by the browser. Select the text and copy it manually.",
+          true,
+        );
+      }
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "icon-button secondary";
+    remove.setAttribute("aria-label", "Delete clipboard entry");
+    remove.title = "Delete";
+    remove.textContent = "×";
+    remove.addEventListener("click", async () => {
+      try {
+        await clipboardRequest(`/api/clipboard/${entry.id}/delete/`, {
+          method: "POST",
+        });
+        await refreshClipboard(true);
+        clipboardMessage("Entry deleted.");
+      } catch (error) {
+        clipboardMessage(`Delete failed: ${error.message}`, true);
+      }
+    });
+    actions.append(view, copy, remove);
+    item.append(text, actions);
+    clipboardList.append(item);
+  }
+
+  document
+    .querySelector(".dialog-close")
+    .addEventListener("click", () => clipboardDialog.close());
+  clipboardDialog.addEventListener("click", (event) => {
+    if (event.target === clipboardDialog) clipboardDialog.close();
+  });
+}
+
+async function refreshClipboard(force = false) {
+  const data = await clipboardRequest("/api/clipboard/");
+  if (force || data.revision !== clipboardRevision) {
+    clipboardRevision = data.revision;
+    renderClipboard(data.entries);
+  }
+}
+
+document
+  .getElementById("clipboard-paste")
+  .addEventListener("click", async () => {
+    try {
+      clipboardInput.value = await navigator.clipboard.readText();
+      clipboardInput.focus();
+      clipboardMessage("Pasted into the text box. Press share when ready.");
+    } catch {
+      clipboardMessage(
+        "Paste was blocked by the browser. Paste into the text box manually.",
+        true,
+      );
+      clipboardInput.focus();
+    }
+  });
+
+document
+  .getElementById("clipboard-share")
+  .addEventListener("click", async () => {
+    try {
+      await clipboardRequest("/api/clipboard/add/", {
+        method: "POST",
+        body: JSON.stringify({ text: clipboardInput.value }),
+      });
+      clipboardInput.value = "";
+      await refreshClipboard(true);
+      clipboardMessage("Text shared.");
+    } catch (error) {
+      clipboardMessage(`Share failed: ${error.message}`, true);
+    }
+  });
+
+document
+  .getElementById("clipboard-clear")
+  .addEventListener("click", async () => {
+    if (!confirm("Delete all shared clipboard entries?")) return;
+    try {
+      await clipboardRequest("/api/clipboard/clear/", { method: "POST" });
+      await refreshClipboard(true);
+      clipboardMessage("Clipboard cleared.");
+    } catch (error) {
+      clipboardMessage(`Clear failed: ${error.message}`, true);
+    }
+  });
+
+refreshClipboard().catch((error) =>
+  clipboardMessage(`Clipboard unavailable: ${error.message}`, true),
+);
+setInterval(() => refreshClipboard().catch(() => {}), 2000);
 
 // Exponentially-smoothed speed meter over streamed byte counts.
 function speedMeter() {

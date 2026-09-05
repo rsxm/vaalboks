@@ -1,3 +1,4 @@
+import json
 import tempfile
 from pathlib import Path
 
@@ -42,3 +43,50 @@ class SharingTests(TestCase):
         response = self.client.get("/files/../settings.py")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_clipboard_entries_persist_in_jsonl_and_can_be_deleted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with override_settings(VAALBOKS_SHARED_ROOT=root):
+                response = self.client.post(
+                    "/api/clipboard/add/",
+                    data=json.dumps({"text": "from the other computer"}),
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 201)
+                entry = response.json()["entry"]
+                clipboard_file = root / "clipboard.jsonl"
+                self.assertTrue(clipboard_file.exists())
+                self.assertEqual(json.loads(clipboard_file.read_text())["text"], entry["text"])
+
+                response = self.client.get("/api/clipboard/")
+                self.assertEqual(response.json()["entries"], [entry])
+
+                response = self.client.post(f"/api/clipboard/{entry['id']}/delete/")
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(clipboard_file.exists())
+
+    def test_clipboard_rejects_blank_text_and_clear_removes_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with override_settings(VAALBOKS_SHARED_ROOT=root):
+                response = self.client.post(
+                    "/api/clipboard/add/",
+                    data=json.dumps({"text": "   "}),
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 400)
+
+                self.client.post(
+                    "/api/clipboard/add/",
+                    data=json.dumps({"text": "one"}),
+                    content_type="application/json",
+                )
+                self.client.post(
+                    "/api/clipboard/add/",
+                    data=json.dumps({"text": "two"}),
+                    content_type="application/json",
+                )
+                response = self.client.post("/api/clipboard/clear/")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(self.client.get("/api/clipboard/").json()["entries"], [])
