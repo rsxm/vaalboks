@@ -60,6 +60,7 @@ exclude = ["shared/**", "vaalboks-data/**", "build/**"]
 
 [dependency-groups]
 dev = [
+    "prek>=0.5.2",
     "ruff>=0.16.6",
     "ty>=0.0.78",
 ]

@@ -44,3 +44,7 @@ updates:
     directory: /
     multi-ecosystem-group: infrastructure
     patterns: ['*']
+  - package-ecosystem: pre-commit
+    directory: /
+    multi-ecosystem-group: infrastructure
+    patterns: ['*']
