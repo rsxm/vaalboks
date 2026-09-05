@@ -15,6 +15,42 @@
   <img class="brand-logo" src="{% static 'share/logo.svg' %}" alt="vaalboks">
   <h1><span class="subtitle">local file share</span></h1>
 
+  <section id="clipboard-panel" aria-labelledby="clipboard-title">
+    <div class="clipboard-heading">
+      <h2 id="clipboard-title">Shared clipboard</h2>
+      <button type="button" id="clipboard-clear" class="icon-button secondary"
+              aria-label="Clear all clipboard entries" title="Clear all">×</button>
+    </div>
+    <textarea id="clipboard-input" rows="2" placeholder="Type or paste text…"></textarea>
+    <div class="clipboard-toolbar">
+      <button type="button" id="clipboard-paste" class="icon-button"
+              aria-label="Paste into text box"
+              title="Paste into text box">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="4" width="14" height="17" rx="2"></rect>
+          <path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h3"></path>
+        </svg>
+      </button>
+      <button type="button" id="clipboard-share" class="icon-button"
+              aria-label="Share text" title="Share text">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="6" cy="12" r="2.5"></circle>
+          <circle cx="18" cy="5" r="2.5"></circle>
+          <circle cx="18" cy="19" r="2.5"></circle>
+          <path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"></path>
+        </svg>
+      </button>
+      <p id="clipboard-status" role="status" aria-live="polite"></p>
+    </div>
+    <div id="clipboard-list"></div>
+  </section>
+
+  <dialog id="clipboard-dialog">
+    <button type="button" class="icon-button secondary dialog-close"
+            aria-label="Close clipboard entry" title="Close">×</button>
+    <pre id="clipboard-dialog-text"></pre>
+  </dialog>
+
   <div id="dropzone">
     <p class="big">Drop files or folders here</p>
     <p>or click to browse</p>
