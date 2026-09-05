@@ -26,10 +26,11 @@ After installing the package, start the server with:
 uvx vaalboks
 ```
 
-This starts HTTPS on `0.0.0.0:8443` with two Uvicorn workers. Runtime data is
-stored in `./vaalboks-data`, and a self-signed certificate is generated there
-on first launch. Migrations and static-file collection run automatically. Use
-`--http` for plain HTTP on port 8123.
+This starts HTTPS on `0.0.0.0:8443` with two workers. Runtime data is stored
+in `./vaalboks-data`, and a self-signed certificate is generated there on
+first launch. Migrations and static-file collection run automatically. Use
+`--http` for plain HTTP on port 8123. The CLI uses Gunicorn on Linux and macOS
+and Uvicorn on Windows.
 
 When running from this checkout:
 
@@ -41,6 +42,9 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 (Find your IP with `ipconfig getifaddr en0`.)
 
 ## Direct Gunicorn HTTPS + zstd
+
+This section applies to Linux and macOS. Windows users should use the `vaalboks`
+command, which selects Uvicorn automatically.
 
 Gunicorn can terminate HTTPS, and Django compresses eligible text responses
 with zstd:

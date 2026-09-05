@@ -53,6 +53,34 @@ def _ensure_certificate(certfile: Path, keyfile: Path) -> bool:
     return True
 
 
+def _run_server(
+    *,
+    args: argparse.Namespace,
+    port: int,
+    certfile: Path,
+    keyfile: Path,
+    gunicorn_args: list[str],
+) -> None:
+    if os.name == "nt":
+        import uvicorn
+
+        uvicorn.run(
+            "vaalboks.asgi:application",
+            host=args.host,
+            port=port,
+            workers=args.workers,
+            access_log=True,
+            ssl_certfile=None if args.http else str(certfile),
+            ssl_keyfile=None if args.http else str(keyfile),
+        )
+        return
+
+    from gunicorn.app.wsgiapp import run
+
+    sys.argv = ["vaalboks", *gunicorn_args]
+    run(prog="vaalboks")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Share files on your local network.")
     parser.add_argument("--http", action="store_true", help="Use HTTP instead of HTTPS.")
@@ -113,7 +141,10 @@ def main() -> None:
     call_command("migrate", interactive=False, verbosity=0)
     call_command("collectstatic", interactive=False, verbosity=0, clear=True)
 
-    from gunicorn.app.wsgiapp import run
-
-    sys.argv = ["vaalboks", *gunicorn_args]
-    run(prog="vaalboks")
+    _run_server(
+        args=args,
+        port=port,
+        certfile=certfile,
+        keyfile=keyfile,
+        gunicorn_args=gunicorn_args,
+    )
