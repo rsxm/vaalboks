@@ -20,17 +20,18 @@ between computers without a separate hosted service.
 
 ## Run
 
-After installing the package, start the server with:
+To use vaalboks, install `uv` and run:
 
 ```sh
 uvx vaalboks
 ```
 
-This starts HTTPS on `0.0.0.0:8443` with two workers. Runtime data is stored
-in `./vaalboks-data`, and a self-signed certificate is generated there on
-first launch. Migrations and static-file collection run automatically. Use
-`--http` for plain HTTP on port 8123. The CLI uses Gunicorn on Linux and macOS
-and Uvicorn on Windows.
+`uvx` downloads and runs the package without requiring a checkout or a
+separate package installation. The command starts HTTPS on `0.0.0.0:8443`
+with two workers. Runtime data is stored in `./vaalboks-data`, and a
+self-signed certificate is generated there on first launch. Migrations and
+static-file collection run automatically. Use `--http` for plain HTTP on port
+8123. The CLI uses Gunicorn on Linux and macOS and Uvicorn on Windows.
 
 When running from this checkout:
 
