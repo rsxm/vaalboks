@@ -141,10 +141,26 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = RUNTIME_DIR / "staticfiles"
 
-# Directory whose contents are shared / where uploads land. This is the
-# setting consumed by the reusable vaalboks app.
+# Directory whose contents are shared / where uploads land.
 VAALBOKS_SHARED_ROOT = RUNTIME_DIR / "shared"
 SHARED_ROOT = VAALBOKS_SHARED_ROOT
+
+# The reusable app intentionally requires this named alias instead of using
+# Django's default storage, so host projects can configure it independently.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "vaalboks": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": str(VAALBOKS_SHARED_ROOT),
+        },
+    },
+}
 
 # Allow large uploads on the LAN
 DATA_UPLOAD_MAX_NUMBER_FILES = None

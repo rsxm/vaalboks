@@ -54,8 +54,8 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 ## Use as a Django app
 
 The file-sharing interface can also be mounted in an existing Django project.
-Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the directory
-used for uploads, and include `vaalboks.urls`:
+Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the required
+`vaalboks` storage alias, run migrations, and include `vaalboks.urls`:
 
 ```python
 # settings.py
@@ -64,7 +64,15 @@ INSTALLED_APPS = [
     "vaalboks",
 ]
 
-VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
+STORAGES = {
+    # Keep the project's existing default/staticfiles aliases as appropriate.
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "vaalboks": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": BASE_DIR / "shared"},
+    },
+}
 ```
 
 ```python
@@ -79,6 +87,28 @@ urlpatterns = [
 The app does not require the bundled `vaalboks_server` settings, middleware,
 or server. The host project remains responsible for Django middleware, static
 files, CSRF, and deployment configuration.
+
+The app always uses `STORAGES["vaalboks"]`; it does not fall back to Django's
+default storage or call `storage.path()`. For object storage, install and
+configure [django-storages](https://django-storages.readthedocs.io/) and use
+its backend in the alias, for example:
+
+```python
+STORAGES = {
+    "vaalboks": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": "my-share",
+            "location": "uploads",
+        },
+    },
+}
+```
+
+File listings use the storage backend's logical `listdir()` operation. A
+backend must implement `listdir()` and `size()` for the browser listing to
+work; object-storage backends may have provider-specific directory semantics.
+Directory names are logical prefixes, not local filesystem paths.
 
 ## Direct Gunicorn HTTPS + zstd
 
@@ -130,9 +160,9 @@ required.
 - `POST /api/clipboard/clear/` — delete all clipboard entries
 - `GET /files/<path>` — download a shared file (path-traversal protected)
 
-Clipboard entries are stored as plain-text JSON lines in
-`~/.vaalboks/shared/clipboard.jsonl` (or the checkout-local
-`vaalboks-data/shared/clipboard.jsonl`, or the configured shared root). The
-browser uses explicit Paste and Copy buttons because browser clipboard access
-requires user permission. The file inherits the same local-network privacy
-model as other shared files.
+Clipboard entries are stored transactionally in the Django database and are
+included in the app's migrations. The browser uses explicit Paste and Copy
+buttons because browser clipboard access requires user permission. Clipboard
+history has the same 100-entry and 10 MB limits as before, and it inherits the
+same local-network privacy model as other shared files. JSONL clipboard files
+are not read by the database-backed implementation.
