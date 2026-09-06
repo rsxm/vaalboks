@@ -179,6 +179,8 @@ def main() -> None:
         f"{args.host}:{port}",
         "--access-logfile",
         "-",
+        "--error-logfile",
+        "-",
     ]
     if not args.http:
         os.environ["VAALBOKS_DEBUG"] = "false"
