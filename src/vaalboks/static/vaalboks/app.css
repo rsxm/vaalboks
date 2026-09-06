@@ -71,6 +71,14 @@ h1 {
   font-size: 1.05rem;
   margin: 0 0 1.25rem;
 }
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.page-heading h1 {
+  margin-bottom: 1.25rem;
+}
 h1 .subtitle {
   color: var(--muted);
   font-weight: 400;

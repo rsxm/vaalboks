@@ -127,7 +127,7 @@ def _build_entries(rel_dir: str = "", request=None) -> list[dict]:
 @ensure_csrf_cookie
 @room_key_required
 def index(request):
-    return render(request, "vaalboks/index.html")
+    return render(request, "vaalboks/index.html", {"room_keys_enabled": room_keys_enabled()})
 
 
 def room(request):
@@ -144,6 +144,13 @@ def room(request):
         request.session.save()
         return HttpResponseRedirect(reverse("vaalboks:index"))
     return render(request, "vaalboks/login.html")
+
+
+@require_POST
+@room_key_required
+def leave_room(request):
+    request.session.flush()
+    return HttpResponseRedirect(reverse("vaalboks:room"))
 
 
 @room_key_required

@@ -48,6 +48,15 @@ class SharingTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "Enter a room phrase.", status_code=400)
 
+    @override_settings(VAALBOKS_ROOM_KEYS=True)
+    def test_leaving_room_flushes_session(self):
+        self.client.post("/room/", {"phrase": "temporary room"})
+
+        response = self.client.post("/room/leave/")
+
+        self.assertRedirects(response, "/room/")
+        self.assertEqual(self.client.get("/").status_code, 302)
+
     def test_index_has_strict_csp_and_external_assets(self):
         response = self.client.get("/")
 

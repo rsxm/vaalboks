@@ -13,7 +13,15 @@
 <body>
 <main>
   <img class="brand-logo" src="{% static 'vaalboks/logo.svg' %}" alt="vaalboks">
-  <h1><span class="subtitle">local file share</span></h1>
+  <div class="page-heading">
+    <h1><span class="subtitle">local file share</span></h1>
+    {% if room_keys_enabled %}
+      <form method="post" action="{% url 'vaalboks:leave-room' %}">
+        {% csrf_token %}
+        <button type="submit" class="secondary">Leave room</button>
+      </form>
+    {% endif %}
+  </div>
 
   <section id="clipboard-panel" aria-labelledby="clipboard-title">
     <div class="clipboard-heading">
