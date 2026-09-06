@@ -38,7 +38,8 @@ server's local-network URL(s) and a terminal QR code for the first URL. Use
 `--no-persist` flag keeps the SQLite database and shared files in memory for
 the current run and automatically uses one worker. In-memory data is lost
 when the process exits. The CLI uses Gunicorn on Linux and macOS and Uvicorn
-on Windows.
+on Windows. Application errors include their traceback in the server's
+standard error log.
 
 For the easiest phone workflow, connect the phone and computer to the same
 Wi-Fi, scan the startup QR code, and open the displayed URL. With the default
