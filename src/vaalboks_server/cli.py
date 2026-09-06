@@ -111,14 +111,14 @@ def _run_server(
     keyfile: Path,
     gunicorn_args: list[str],
 ) -> None:
-    if os.name == "nt":
+    if os.name == "nt" or args.no_persist:
         import uvicorn
 
         uvicorn.run(
             "vaalboks_server.asgi:application",
             host=args.host,
             port=port,
-            workers=args.workers,
+            workers=1 if args.no_persist else args.workers,
             access_log=True,
             ssl_certfile=None if args.http else str(certfile),
             ssl_keyfile=None if args.http else str(keyfile),

@@ -105,7 +105,19 @@ WSGI_APPLICATION = "vaalboks_server.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:" if NO_PERSIST else RUNTIME_DIR / "db.sqlite3",
+        "NAME": (
+            "file:vaalboks-no-persist?mode=memory&cache=shared"
+            if NO_PERSIST
+            else RUNTIME_DIR / "db.sqlite3"
+        ),
+        **(
+            {
+                "OPTIONS": {"uri": True},
+                "CONN_MAX_AGE": None,
+            }
+            if NO_PERSIST
+            else {}
+        ),
     }
 }
 
