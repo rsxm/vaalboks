@@ -22,7 +22,7 @@ def configure_tls(cert_path: Path, key_path: Path) -> None:
 
 if certfile is None or keyfile is None:
     raise RuntimeError(
-        "TLS is required by vaalboks.gunicorn; set VAALBOKS_CERTFILE and "
+        "TLS is required by vaalboks_server.gunicorn; set VAALBOKS_CERTFILE and "
         "VAALBOKS_KEYFILE before starting Gunicorn."
     )
 if not Path(certfile).is_file():

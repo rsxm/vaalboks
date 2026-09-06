@@ -80,14 +80,14 @@ def _build_entries(rel_dir: str = "") -> list[dict]:
 
 @ensure_csrf_cookie
 def index(request):
-    return render(request, "share/index.html")
+    return render(request, "vaalboks/index.html")
 
 
 def list_files(request):
     """htmx partial: refreshed file listing."""
     return render(
         request,
-        "share/_file_list.html",
+        "vaalboks/_file_list.html",
         {"entries": _build_entries(request.GET.get("path", ""))},
     )
 

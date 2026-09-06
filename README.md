@@ -1,7 +1,7 @@
 # vaalboks
 
 <p align="center">
-  <img src="share/static/share/logo.svg" alt="vaalboks logo" width="520">
+  <img src="src/vaalboks/static/vaalboks/logo.svg" alt="vaalboks logo" width="520">
 </p>
 
 Vaalboks is a small file-sharing server for a local network. Drop files or
@@ -29,7 +29,8 @@ uvx vaalboks
 
 `uvx` downloads and runs the package without requiring a checkout or a
 separate package installation. The command starts HTTPS on `0.0.0.0:8443`
-with two workers. Runtime data is stored in `./vaalboks-data`, and a
+with two workers. Runtime data is stored in `~/.vaalboks` when run outside a
+Git checkout, and in `./vaalboks-data` when run from this repository. A
 self-signed certificate is generated there on first launch. Migrations and
 static-file collection run automatically. At startup, the CLI prints the
 server's local-network URL(s) and a terminal QR code for the first URL. Use
@@ -53,14 +54,14 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 ## Use as a Django app
 
 The file-sharing interface can also be mounted in an existing Django project.
-Install `vaalboks`, add `share` to `INSTALLED_APPS`, configure the directory
-used for uploads, and include the app URLs:
+Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the directory
+used for uploads, and include `vaalboks.urls`:
 
 ```python
 # settings.py
 INSTALLED_APPS = [
     # ...
-    "share",
+    "vaalboks",
 ]
 
 VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
@@ -71,12 +72,12 @@ VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
 from django.urls import include, path
 
 urlpatterns = [
-    path("share/", include("share.urls")),
+    path("share/", include("vaalboks.urls")),
 ]
 ```
 
-The app does not require the bundled `vaalboks` settings, middleware, or
-server. The host project remains responsible for Django middleware, static
+The app does not require the bundled `vaalboks_server` settings, middleware,
+or server. The host project remains responsible for Django middleware, static
 files, CSRF, and deployment configuration.
 
 ## Direct Gunicorn HTTPS + zstd
@@ -88,7 +89,7 @@ Gunicorn can terminate HTTPS, and Django compresses eligible text responses
 with zstd:
 
 ```sh
-uv run gunicorn vaalboks.asgi:application \
+uv run gunicorn vaalboks_server.asgi:application \
   --worker-class uvicorn_worker.UvicornWorker \
   --workers 2 \
   --bind 0.0.0.0:8443 \
@@ -100,7 +101,9 @@ Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
 each device that will connect. This setup provides HTTPS and zstd compression.
 
 The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
-`--certfile`, and `--keyfile`.
+`--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to configure the
+runtime directory without a command-line argument; explicit configuration
+takes precedence over the defaults.
 
 ## Publishing
 
@@ -128,7 +131,8 @@ required.
 - `GET /files/<path>` — download a shared file (path-traversal protected)
 
 Clipboard entries are stored as plain-text JSON lines in
-`vaalboks-data/shared/clipboard.jsonl` (or the configured shared root). The
+`~/.vaalboks/shared/clipboard.jsonl` (or the checkout-local
+`vaalboks-data/shared/clipboard.jsonl`, or the configured shared root). The
 browser uses explicit Paste and Copy buttons because browser clipboard access
 requires user permission. The file inherits the same local-network privacy
 model as other shared files.

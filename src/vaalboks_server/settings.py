@@ -14,9 +14,11 @@ import os
 import secrets
 from pathlib import Path
 
+from vaalboks_server.data import default_data_dir
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR", BASE_DIR / "vaalboks-data"))
+RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,14 +43,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "share",
+    "vaalboks",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
-    "share.middleware.ZstdMiddleware",
+    "vaalboks.middleware.ZstdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -71,7 +73,7 @@ SECURE_CSP = {
     "worker-src": ["'none'"],
 }
 
-ROOT_URLCONF = "vaalboks.urls"
+ROOT_URLCONF = "vaalboks_server.urls"
 
 TEMPLATES = [
     {
@@ -88,7 +90,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "vaalboks.wsgi.application"
+WSGI_APPLICATION = "vaalboks_server.wsgi.application"
 
 
 # Database
@@ -140,7 +142,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = RUNTIME_DIR / "staticfiles"
 
 # Directory whose contents are shared / where uploads land. This is the
-# setting consumed by the reusable share app.
+# setting consumed by the reusable vaalboks app.
 VAALBOKS_SHARED_ROOT = RUNTIME_DIR / "shared"
 SHARED_ROOT = VAALBOKS_SHARED_ROOT
 

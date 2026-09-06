@@ -6,6 +6,8 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from vaalboks_server.data import default_data_dir
+
 
 def _lan_addresses() -> list[str]:
     addresses = {"127.0.0.1"}
@@ -113,7 +115,7 @@ def _run_server(
         import uvicorn
 
         uvicorn.run(
-            "vaalboks.asgi:application",
+            "vaalboks_server.asgi:application",
             host=args.host,
             port=port,
             workers=args.workers,
@@ -151,7 +153,7 @@ def main() -> None:
 
     if args.data_dir:
         os.environ["VAALBOKS_DATA_DIR"] = str(args.data_dir.expanduser().resolve())
-    data_dir = Path(os.environ.get("VAALBOKS_DATA_DIR", Path.cwd() / "vaalboks-data"))
+    data_dir = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
     os.environ["VAALBOKS_DATA_DIR"] = str(data_dir.resolve())
     data_dir.mkdir(parents=True, exist_ok=True)
     certfile = (args.certfile or data_dir / "certs" / "vaalboks-cert.pem").expanduser()
@@ -159,7 +161,7 @@ def main() -> None:
     port = args.port or (8123 if args.http else 8443)
 
     gunicorn_args = [
-        "vaalboks.asgi:application",
+        "vaalboks_server.asgi:application",
         "--worker-class",
         "uvicorn_worker.UvicornWorker",
         "--workers",
@@ -186,7 +188,7 @@ def main() -> None:
             )
         gunicorn_args.extend(["--certfile", str(certfile), "--keyfile", str(keyfile)])
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vaalboks.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vaalboks_server.settings")
     import django
     from django.core.management import call_command
 
