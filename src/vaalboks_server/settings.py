@@ -19,6 +19,12 @@ from vaalboks_server.data import default_data_dir
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
+NO_PERSIST = os.environ.get("VAALBOKS_NO_PERSIST", "").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 
 # Quick-start development settings - unsuitable for production
@@ -99,7 +105,7 @@ WSGI_APPLICATION = "vaalboks_server.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": RUNTIME_DIR / "db.sqlite3",
+        "NAME": ":memory:" if NO_PERSIST else RUNTIME_DIR / "db.sqlite3",
     }
 }
 
@@ -154,12 +160,16 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
-    "vaalboks": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-        "OPTIONS": {
-            "location": str(VAALBOKS_SHARED_ROOT),
-        },
-    },
+    "vaalboks": (
+        {"BACKEND": "django.core.files.storage.InMemoryStorage"}
+        if NO_PERSIST
+        else {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": str(VAALBOKS_SHARED_ROOT),
+            },
+        }
+    ),
 }
 
 # Allow large uploads on the LAN

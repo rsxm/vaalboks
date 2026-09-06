@@ -147,9 +147,18 @@ def main() -> None:
         type=Path,
         help="Directory for the database and shared files.",
     )
+    parser.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Keep the database and shared files in memory for this run.",
+    )
     parser.add_argument("--certfile", type=Path)
     parser.add_argument("--keyfile", type=Path)
     args = parser.parse_args()
+
+    if args.no_persist:
+        os.environ["VAALBOKS_NO_PERSIST"] = "true"
+        args.workers = 1
 
     if args.data_dir:
         os.environ["VAALBOKS_DATA_DIR"] = str(args.data_dir.expanduser().resolve())

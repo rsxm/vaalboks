@@ -35,7 +35,10 @@ self-signed certificate is generated there on first launch. Migrations and
 static-file collection run automatically. At startup, the CLI prints the
 server's local-network URL(s) and a terminal QR code for the first URL. Use
 `--no-qr` to hide the QR code. Use `--http` for plain HTTP on port 8123. The
-CLI uses Gunicorn on Linux and macOS and Uvicorn on Windows.
+`--no-persist` flag keeps the SQLite database and shared files in memory for
+the current run and automatically uses one worker. In-memory data is lost
+when the process exits. The CLI uses Gunicorn on Linux and macOS and Uvicorn
+on Windows.
 
 For the easiest phone workflow, connect the phone and computer to the same
 Wi-Fi, scan the startup QR code, and open the displayed URL. With the default
@@ -129,9 +132,9 @@ Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
 each device that will connect. This setup provides HTTPS and zstd compression.
 
 The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
-`--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to configure the
-runtime directory without a command-line argument; explicit configuration
-takes precedence over the defaults.
+`--no-persist`, `--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to
+configure the runtime directory without a command-line argument; explicit
+configuration takes precedence over the defaults.
 
 ## Publishing
 
