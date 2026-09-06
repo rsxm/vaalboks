@@ -13,7 +13,7 @@ class SharingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("default-src 'none'", response["Content-Security-Policy"])
-        self.assertContains(response, "/static/share/app.css")
+        self.assertContains(response, "/static/vaalboks/app.css")
         self.assertNotContains(response, "<style")
         self.assertNotContains(response, ' style="')
 

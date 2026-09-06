@@ -5,11 +5,13 @@
       "**",
       "!node_modules",
       "!share/static/share/vendor",
+      "!src/vaalboks/static/vaalboks/vendor",
       "!.venv",
       "!build",
       "!dist",
       "!vaalboks-data",
-      "!share/templates"
+      "!share/templates",
+      "!src/vaalboks/templates"
     ]
   },
   "formatter": {

@@ -28,17 +28,18 @@ dependencies = [
 ]
 
 [project.scripts]
-vaalboks = "vaalboks.cli:main"
+vaalboks = "vaalboks_server.cli:main"
 
 [build-system]
 requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["vaalboks", "vaalboks.*", "share", "share.*"]
+where = ["src"]
+include = ["vaalboks", "vaalboks.*", "vaalboks_server", "vaalboks_server.*"]
 
 [tool.setuptools.package-data]
-share = ["templates/**/*.html", "static/**/*"]
+vaalboks = ["templates/**/*.html", "static/**/*"]
 
 [tool.ruff]
 target-version = "py314"
@@ -56,7 +57,7 @@ indent-style = "space"
 python-version = "3.14"
 
 [tool.ty.src]
-include = ["manage.py", "vaalboks", "share"]
+include = ["manage.py", "src"]
 exclude = ["shared/**", "vaalboks-data/**", "build/**"]
 
 [dependency-groups]

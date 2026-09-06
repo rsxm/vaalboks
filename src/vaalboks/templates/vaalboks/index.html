@@ -5,14 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>vaalboks — LAN file share</title>
-  <link rel="icon" href="{% static 'share/favicon.ico' %}" sizes="any">
-  <link rel="icon" href="{% static 'share/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'share/app.css' %}">
-  <script src="{% static 'share/vendor/htmx.min.js' %}"></script>
+  <link rel="icon" href="{% static 'vaalboks/favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'vaalboks/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'vaalboks/app.css' %}">
+  <script src="{% static 'vaalboks/vendor/htmx.min.js' %}"></script>
 </head>
 <body>
 <main>
-  <img class="brand-logo" src="{% static 'share/logo.svg' %}" alt="vaalboks">
+  <img class="brand-logo" src="{% static 'vaalboks/logo.svg' %}" alt="vaalboks">
   <h1><span class="subtitle">local file share</span></h1>
 
   <section id="clipboard-panel" aria-labelledby="clipboard-title">
@@ -70,11 +70,11 @@
   </div>
 
   <div id="file-list"
-       hx-get="{% url 'share:list-files' %}"
+       hx-get="{% url 'vaalboks:list-files' %}"
        hx-trigger="load, fileschanged from:body"
        hx-swap="innerHTML"></div>
 </main>
 
-<script src="{% static 'share/app.js' %}" defer></script>
+<script src="{% static 'vaalboks/app.js' %}" defer></script>
 </body>
 </html>

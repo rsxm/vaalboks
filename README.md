@@ -1,7 +1,7 @@
 # vaalboks
 
 <p align="center">
-  <img src="share/static/share/logo.svg" alt="vaalboks logo" width="520">
+  <img src="src/vaalboks/static/vaalboks/logo.svg" alt="vaalboks logo" width="520">
 </p>
 
 Vaalboks is a small file-sharing server for a local network. Drop files or
@@ -54,14 +54,14 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 ## Use as a Django app
 
 The file-sharing interface can also be mounted in an existing Django project.
-Install `vaalboks`, add `share` to `INSTALLED_APPS`, configure the directory
-used for uploads, and include the app URLs:
+Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the directory
+used for uploads, and include `vaalboks.urls`:
 
 ```python
 # settings.py
 INSTALLED_APPS = [
     # ...
-    "share",
+    "vaalboks",
 ]
 
 VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
@@ -72,12 +72,12 @@ VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
 from django.urls import include, path
 
 urlpatterns = [
-    path("share/", include("share.urls")),
+    path("share/", include("vaalboks.urls")),
 ]
 ```
 
-The app does not require the bundled `vaalboks` settings, middleware, or
-server. The host project remains responsible for Django middleware, static
+The app does not require the bundled `vaalboks_server` settings, middleware,
+or server. The host project remains responsible for Django middleware, static
 files, CSRF, and deployment configuration.
 
 ## Direct Gunicorn HTTPS + zstd
@@ -89,7 +89,7 @@ Gunicorn can terminate HTTPS, and Django compresses eligible text responses
 with zstd:
 
 ```sh
-uv run gunicorn vaalboks.asgi:application \
+uv run gunicorn vaalboks_server.asgi:application \
   --worker-class uvicorn_worker.UvicornWorker \
   --workers 2 \
   --bind 0.0.0.0:8443 \

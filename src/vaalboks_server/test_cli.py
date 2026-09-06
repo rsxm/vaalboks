@@ -4,12 +4,12 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-from vaalboks.cli import _access_urls, _terminal_qr
-from vaalboks.data import default_data_dir, repository_root
+from vaalboks_server.cli import _access_urls, _terminal_qr
+from vaalboks_server.data import default_data_dir, repository_root
 
 
 class CliTests(TestCase):
-    @patch("vaalboks.cli._lan_addresses", return_value=["10.0.0.12", "127.0.0.1"])
+    @patch("vaalboks_server.cli._lan_addresses", return_value=["10.0.0.12", "127.0.0.1"])
     def test_access_urls_use_lan_addresses_for_wildcard_bind(self, _lan_addresses):
         self.assertEqual(
             _access_urls(host="0.0.0.0", port=8123, http=True),
@@ -49,7 +49,7 @@ class DataDirectoryTests(TestCase):
 
             self.assertEqual(repository_root(root), root.resolve())
 
-    @patch("vaalboks.data.Path.home")
+    @patch("vaalboks_server.data.Path.home")
     def test_default_data_dir_uses_home_outside_repository(self, home):
         with tempfile.TemporaryDirectory() as temporary_directory:
             home.return_value = Path(temporary_directory) / "home"

@@ -6,7 +6,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from vaalboks.data import default_data_dir
+from vaalboks_server.data import default_data_dir
 
 
 def _lan_addresses() -> list[str]:
@@ -115,7 +115,7 @@ def _run_server(
         import uvicorn
 
         uvicorn.run(
-            "vaalboks.asgi:application",
+            "vaalboks_server.asgi:application",
             host=args.host,
             port=port,
             workers=args.workers,
@@ -161,7 +161,7 @@ def main() -> None:
     port = args.port or (8123 if args.http else 8443)
 
     gunicorn_args = [
-        "vaalboks.asgi:application",
+        "vaalboks_server.asgi:application",
         "--worker-class",
         "uvicorn_worker.UvicornWorker",
         "--workers",
@@ -188,7 +188,7 @@ def main() -> None:
             )
         gunicorn_args.extend(["--certfile", str(certfile), "--keyfile", str(keyfile)])
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vaalboks.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vaalboks_server.settings")
     import django
     from django.core.management import call_command
 
