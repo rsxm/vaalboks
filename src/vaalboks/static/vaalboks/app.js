@@ -54,7 +54,12 @@ async function clipboardRequest(url, options = {}) {
   }
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) {
-    throw new Error((await response.json()).error || `HTTP ${response.status}`);
+    const contentType = response.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    throw new Error(`HTTP ${response.status}`);
   }
   return response.json();
 }
@@ -306,6 +311,8 @@ async function downloadWithStats(url) {
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const total = Number(resp.headers.get("Content-Length")) || 0;
+  const contentType =
+    resp.headers.get("Content-Type") || "application/octet-stream";
   const disposition = resp.headers.get("Content-Disposition") || "";
   const name =
     disposition.match(/filename="?([^";]+)"?/)?.[1] || url.split("/").pop();
@@ -339,7 +346,7 @@ async function downloadWithStats(url) {
   progressLabel.textContent = `Downloaded ${name} (${fmtBytes(received)}) in ${secs.toFixed(1)}s (${fmtBytes(avg)}/s).`;
   setTimeout(() => progressWrap.classList.remove("active"), 2500);
 
-  const blobUrl = URL.createObjectURL(new Blob(chunks));
+  const blobUrl = URL.createObjectURL(new Blob(chunks, { type: contentType }));
   const a = document.createElement("a");
   a.href = blobUrl;
   a.download = name;

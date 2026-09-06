@@ -111,14 +111,14 @@ def _run_server(
     keyfile: Path,
     gunicorn_args: list[str],
 ) -> None:
-    if os.name == "nt":
+    if os.name == "nt" or args.no_persist:
         import uvicorn
 
         uvicorn.run(
             "vaalboks_server.asgi:application",
             host=args.host,
             port=port,
-            workers=args.workers,
+            workers=1 if args.no_persist else args.workers,
             access_log=True,
             ssl_certfile=None if args.http else str(certfile),
             ssl_keyfile=None if args.http else str(keyfile),
@@ -147,9 +147,18 @@ def main() -> None:
         type=Path,
         help="Directory for the database and shared files.",
     )
+    parser.add_argument(
+        "--no-persist",
+        action="store_true",
+        help="Keep the database and shared files in memory for this run.",
+    )
     parser.add_argument("--certfile", type=Path)
     parser.add_argument("--keyfile", type=Path)
     args = parser.parse_args()
+
+    if args.no_persist:
+        os.environ["VAALBOKS_NO_PERSIST"] = "true"
+        args.workers = 1
 
     if args.data_dir:
         os.environ["VAALBOKS_DATA_DIR"] = str(args.data_dir.expanduser().resolve())
@@ -169,6 +178,8 @@ def main() -> None:
         "--bind",
         f"{args.host}:{port}",
         "--access-logfile",
+        "-",
+        "--error-logfile",
         "-",
     ]
     if not args.http:
