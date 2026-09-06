@@ -14,9 +14,11 @@ import os
 import secrets
 from pathlib import Path
 
+from vaalboks.data import default_data_dir
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR", BASE_DIR / "vaalboks-data"))
+RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
 
 
 # Quick-start development settings - unsuitable for production

@@ -6,6 +6,8 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from vaalboks.data import default_data_dir
+
 
 def _lan_addresses() -> list[str]:
     addresses = {"127.0.0.1"}
@@ -151,7 +153,7 @@ def main() -> None:
 
     if args.data_dir:
         os.environ["VAALBOKS_DATA_DIR"] = str(args.data_dir.expanduser().resolve())
-    data_dir = Path(os.environ.get("VAALBOKS_DATA_DIR", Path.cwd() / "vaalboks-data"))
+    data_dir = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
     os.environ["VAALBOKS_DATA_DIR"] = str(data_dir.resolve())
     data_dir.mkdir(parents=True, exist_ok=True)
     certfile = (args.certfile or data_dir / "certs" / "vaalboks-cert.pem").expanduser()

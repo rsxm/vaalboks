@@ -29,7 +29,8 @@ uvx vaalboks
 
 `uvx` downloads and runs the package without requiring a checkout or a
 separate package installation. The command starts HTTPS on `0.0.0.0:8443`
-with two workers. Runtime data is stored in `./vaalboks-data`, and a
+with two workers. Runtime data is stored in `~/.vaalboks` when run outside a
+Git checkout, and in `./vaalboks-data` when run from this repository. A
 self-signed certificate is generated there on first launch. Migrations and
 static-file collection run automatically. At startup, the CLI prints the
 server's local-network URL(s) and a terminal QR code for the first URL. Use
@@ -100,7 +101,9 @@ Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
 each device that will connect. This setup provides HTTPS and zstd compression.
 
 The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
-`--certfile`, and `--keyfile`.
+`--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to configure the
+runtime directory without a command-line argument; explicit configuration
+takes precedence over the defaults.
 
 ## Publishing
 
@@ -128,7 +131,8 @@ required.
 - `GET /files/<path>` — download a shared file (path-traversal protected)
 
 Clipboard entries are stored as plain-text JSON lines in
-`vaalboks-data/shared/clipboard.jsonl` (or the configured shared root). The
+`~/.vaalboks/shared/clipboard.jsonl` (or the checkout-local
+`vaalboks-data/shared/clipboard.jsonl`, or the configured shared root). The
 browser uses explicit Paste and Copy buttons because browser clipboard access
 requires user permission. The file inherits the same local-network privacy
 model as other shared files.
