@@ -30,8 +30,8 @@ def _serialized_size(entries: list[dict[str, str]]) -> int:
     )
 
 
-def _prune_entries() -> None:
-    entries = list(ClipboardEntry.objects.order_by("created_at", "id"))
+def _prune_entries(room_id: str) -> None:
+    entries = list(ClipboardEntry.objects.filter(room_id=room_id).order_by("created_at", "id"))
     while len(entries) > MAX_ENTRIES or _serialized_size(
         [_entry_dict(entry) for entry in entries]
     ) > (MAX_HISTORY_BYTES):
@@ -45,12 +45,15 @@ def _revision(entries: list[dict[str, str]]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def list_entries() -> tuple[list[dict[str, str]], str]:
-    entries = [_entry_dict(entry) for entry in ClipboardEntry.objects.order_by("created_at", "id")]
+def list_entries(room_id: str = "") -> tuple[list[dict[str, str]], str]:
+    entries = [
+        _entry_dict(entry)
+        for entry in ClipboardEntry.objects.filter(room_id=room_id).order_by("created_at", "id")
+    ]
     return list(reversed(entries)), _revision(entries)
 
 
-def append_entry(text: str) -> dict[str, str]:
+def append_entry(text: str, room_id: str = "") -> dict[str, str]:
     if not text.strip():
         raise ValueError("text must not be blank")
     if len(text.encode("utf-8")) > MAX_ENTRY_BYTES:
@@ -58,21 +61,22 @@ def append_entry(text: str) -> dict[str, str]:
 
     entry = ClipboardEntry(
         id=uuid.uuid4().hex,
+        room_id=room_id,
         text=text,
         created_at=datetime.now(UTC),
     )
     with transaction.atomic():
         entry.save(force_insert=True)
-        _prune_entries()
+        _prune_entries(room_id)
     return _entry_dict(entry)
 
 
-def delete_entry(entry_id: str) -> bool:
+def delete_entry(entry_id: str, room_id: str = "") -> bool:
     with transaction.atomic():
-        deleted, _ = ClipboardEntry.objects.filter(pk=entry_id).delete()
+        deleted, _ = ClipboardEntry.objects.filter(pk=entry_id, room_id=room_id).delete()
     return bool(deleted)
 
 
-def clear_entries() -> None:
+def clear_entries(room_id: str = "") -> None:
     with transaction.atomic():
-        ClipboardEntry.objects.all().delete()
+        ClipboardEntry.objects.filter(room_id=room_id).delete()

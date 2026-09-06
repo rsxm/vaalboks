@@ -38,6 +38,8 @@ DEBUG = os.environ.get("VAALBOKS_DEBUG", "").lower() in {"1", "true", "yes", "on
 
 # Local-network file sharing: accept any LAN host
 ALLOWED_HOSTS = ["*"]
+VAALBOKS_ROOM_KEYS = True
+VAALBOKS_SESSION_AGE = 12 * 60 * 60
 
 LOGGING = {
     "version": 1,

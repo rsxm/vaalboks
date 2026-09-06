@@ -6,6 +6,7 @@ from django.db import models
 class ClipboardEntry(models.Model):
     objects: ClassVar[models.Manager]
     id = models.CharField(max_length=32, primary_key=True)
+    room_id = models.CharField(max_length=64, default="", db_index=True)
     text = models.TextField()
     created_at = models.DateTimeField(db_index=True)
 

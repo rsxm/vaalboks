@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vaalboks — choose a room</title>
+  <link rel="icon" href="{% static 'vaalboks/favicon.ico' %}" sizes="any">
+  <link rel="stylesheet" href="{% static 'vaalboks/app.css' %}">
+</head>
+<body>
+<main>
+  <img class="brand-logo" src="{% static 'vaalboks/logo.svg' %}" alt="vaalboks">
+  <section class="access-panel">
+    <h1>Choose a sharing room</h1>
+    <p>Use the same phrase on each device that should share files and clipboard text.</p>
+    <form method="post">
+      {% csrf_token %}
+      <label for="room-phrase">Room phrase</label>
+      <input id="room-phrase" name="phrase" type="text" autocomplete="off"
+             autocapitalize="none" spellcheck="false" required autofocus>
+      <p id="phrase-feedback" class="access-help" aria-live="polite">
+        A longer, less predictable phrase is safer.
+      </p>
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+      <button type="submit">Enter room</button>
+    </form>
+    <p class="access-help">
+      This is suitable for short-lived use on a trusted LAN. A phrase alone is
+      not sufficient protection for an internet-facing deployment.
+    </p>
+  </section>
+</main>
+<script>
+  const phrase = document.getElementById("room-phrase");
+  const feedback = document.getElementById("phrase-feedback");
+  phrase.addEventListener("input", () => {
+    const words = phrase.value.trim().split(/\s+/).filter(Boolean);
+    const length = phrase.value.trim().length;
+    if (words.length >= 6 || length >= 30) {
+      feedback.textContent = "Good for a persistent room on a trusted LAN.";
+      feedback.className = "access-help strength-good";
+    } else if (words.length >= 4 || length >= 18) {
+      feedback.textContent = "Reasonable for a short-lived trusted-LAN session.";
+      feedback.className = "access-help strength-medium";
+    } else {
+      feedback.textContent = "Easy to guess. Use more words for anything persistent.";
+      feedback.className = "access-help strength-weak";
+    }
+  });
+</script>
+</body>
+</html>
