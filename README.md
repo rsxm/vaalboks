@@ -31,8 +31,15 @@ uvx vaalboks
 separate package installation. The command starts HTTPS on `0.0.0.0:8443`
 with two workers. Runtime data is stored in `./vaalboks-data`, and a
 self-signed certificate is generated there on first launch. Migrations and
-static-file collection run automatically. Use `--http` for plain HTTP on port
-8123. The CLI uses Gunicorn on Linux and macOS and Uvicorn on Windows.
+static-file collection run automatically. At startup, the CLI prints the
+server's local-network URL(s) and a terminal QR code for the first URL. Use
+`--no-qr` to hide the QR code. Use `--http` for plain HTTP on port 8123. The
+CLI uses Gunicorn on Linux and macOS and Uvicorn on Windows.
+
+For the easiest phone workflow, connect the phone and computer to the same
+Wi-Fi, scan the startup QR code, and open the displayed URL. With the default
+HTTPS mode, accept the self-signed certificate warning on the phone; use
+`--http` on a trusted home network if you want to avoid that warning.
 
 When running from this checkout:
 

@@ -10,10 +10,58 @@ from pathlib import Path
 def _lan_addresses() -> list[str]:
     addresses = {"127.0.0.1"}
     try:
-        addresses.add(socket.gethostbyname(socket.gethostname()))
+        for result in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            address = result[4][0]
+            if isinstance(address, str):
+                addresses.add(address)
     except socket.gaierror:
         pass
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("8.8.8.8", 80))
+            addresses.add(probe.getsockname()[0])
+    except OSError:
+        pass
     return sorted(addresses)
+
+
+def _access_urls(*, host: str, port: int, http: bool) -> list[str]:
+    scheme = "http" if http else "https"
+    if host not in {"0.0.0.0", "::"}:
+        addresses = [host]
+    else:
+        addresses = [address for address in _lan_addresses() if address != "127.0.0.1"]
+        if not addresses:
+            addresses = ["127.0.0.1"]
+    return [f"{scheme}://{address}:{port}/" for address in addresses]
+
+
+def _terminal_qr(value: str) -> str:
+    import qrcode
+
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(value)
+    qr.make(fit=True)
+    matrix = qr.get_matrix()
+    return "\n".join(
+        "".join("\N{FULL BLOCK}" * 2 if cell else "  " for cell in row) for row in matrix
+    )
+
+
+def _display_access(*, host: str, port: int, http: bool, show_qr: bool) -> None:
+    urls = _access_urls(host=host, port=port, http=http)
+    print("\nVaalboks is ready. Open one of these URLs:", file=sys.stderr)
+    for url in urls:
+        print(f"  {url}", file=sys.stderr)
+    if show_qr:
+        print("\nScan this QR code on your phone:", file=sys.stderr)
+        print(_terminal_qr(urls[0]), file=sys.stderr)
+        if not http:
+            print(
+                "\nHTTPS uses a local self-signed certificate; accept the browser "
+                "warning on each device.",
+                file=sys.stderr,
+            )
 
 
 def _ensure_certificate(certfile: Path, keyfile: Path) -> bool:
@@ -88,6 +136,11 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument(
+        "--no-qr",
+        action="store_true",
+        help="Do not print a terminal QR code at startup.",
+    )
+    parser.add_argument(
         "--data-dir",
         type=Path,
         help="Directory for the database and shared files.",
@@ -141,6 +194,7 @@ def main() -> None:
     call_command("migrate", interactive=False, verbosity=0)
     call_command("collectstatic", interactive=False, verbosity=0, clear=True)
 
+    _display_access(host=args.host, port=port, http=args.http, show_qr=not args.no_qr)
     _run_server(
         args=args,
         port=port,
