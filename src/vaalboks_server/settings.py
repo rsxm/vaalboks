@@ -19,6 +19,12 @@ from vaalboks_server.data import default_data_dir
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 RUNTIME_DIR = Path(os.environ.get("VAALBOKS_DATA_DIR") or default_data_dir()).expanduser()
+NO_PERSIST = os.environ.get("VAALBOKS_NO_PERSIST", "").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,6 +38,40 @@ DEBUG = os.environ.get("VAALBOKS_DEBUG", "").lower() in {"1", "true", "yes", "on
 
 # Local-network file sharing: accept any LAN host
 ALLOWED_HOSTS = ["*"]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "{asctime} {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "vaalboks": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
 
 
 # Application definition
@@ -99,7 +139,19 @@ WSGI_APPLICATION = "vaalboks_server.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": RUNTIME_DIR / "db.sqlite3",
+        "NAME": (
+            "file:vaalboks-no-persist?mode=memory&cache=shared"
+            if NO_PERSIST
+            else RUNTIME_DIR / "db.sqlite3"
+        ),
+        **(
+            {
+                "OPTIONS": {"uri": True},
+                "CONN_MAX_AGE": None,
+            }
+            if NO_PERSIST
+            else {}
+        ),
     }
 }
 
@@ -141,10 +193,30 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = RUNTIME_DIR / "staticfiles"
 
-# Directory whose contents are shared / where uploads land. This is the
-# setting consumed by the reusable vaalboks app.
+# Directory whose contents are shared / where uploads land.
 VAALBOKS_SHARED_ROOT = RUNTIME_DIR / "shared"
 SHARED_ROOT = VAALBOKS_SHARED_ROOT
+
+# The reusable app intentionally requires this named alias instead of using
+# Django's default storage, so host projects can configure it independently.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "vaalboks": (
+        {"BACKEND": "django.core.files.storage.InMemoryStorage"}
+        if NO_PERSIST
+        else {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": str(VAALBOKS_SHARED_ROOT),
+            },
+        }
+    ),
+}
 
 # Allow large uploads on the LAN
 DATA_UPLOAD_MAX_NUMBER_FILES = None

@@ -35,7 +35,11 @@ self-signed certificate is generated there on first launch. Migrations and
 static-file collection run automatically. At startup, the CLI prints the
 server's local-network URL(s) and a terminal QR code for the first URL. Use
 `--no-qr` to hide the QR code. Use `--http` for plain HTTP on port 8123. The
-CLI uses Gunicorn on Linux and macOS and Uvicorn on Windows.
+`--no-persist` flag keeps the SQLite database and shared files in memory for
+the current run and automatically uses one worker. In-memory data is lost
+when the process exits. The CLI uses Gunicorn on Linux and macOS and Uvicorn
+on Windows. Application errors include their traceback in the server's
+standard error log.
 
 For the easiest phone workflow, connect the phone and computer to the same
 Wi-Fi, scan the startup QR code, and open the displayed URL. With the default
@@ -54,8 +58,8 @@ Then open `http://<your-LAN-IP>:8123/` from any device on the network.
 ## Use as a Django app
 
 The file-sharing interface can also be mounted in an existing Django project.
-Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the directory
-used for uploads, and include `vaalboks.urls`:
+Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the required
+`vaalboks` storage alias, run migrations, and include `vaalboks.urls`:
 
 ```python
 # settings.py
@@ -64,7 +68,15 @@ INSTALLED_APPS = [
     "vaalboks",
 ]
 
-VAALBOKS_SHARED_ROOT = BASE_DIR / "shared"
+STORAGES = {
+    # Keep the project's existing default/staticfiles aliases as appropriate.
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "vaalboks": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": BASE_DIR / "shared"},
+    },
+}
 ```
 
 ```python
@@ -79,6 +91,26 @@ urlpatterns = [
 The app does not require the bundled `vaalboks_server` settings, middleware,
 or server. The host project remains responsible for Django middleware, static
 files, CSRF, and deployment configuration.
+
+The app always uses `STORAGES["vaalboks"]`; it does not fall back to Django's
+default storage or call `storage.path()`. For quick, ephemeral sharing, Django
+also includes an in-memory storage backend:
+
+```python
+STORAGES = {
+    "vaalboks": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
+    },
+}
+```
+
+In-memory files disappear when the server process stops and are not shared
+between multiple worker processes, so use it for short-lived single-process
+sharing. The bundled CLI uses persistent local file storage by default.
+
+File listings use the storage backend's logical `listdir()` operation. A
+backend must implement `listdir()` and `size()` for the browser listing to
+work. Directory names are logical storage paths, not local filesystem paths.
 
 ## Direct Gunicorn HTTPS + zstd
 
@@ -101,9 +133,9 @@ Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
 each device that will connect. This setup provides HTTPS and zstd compression.
 
 The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
-`--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to configure the
-runtime directory without a command-line argument; explicit configuration
-takes precedence over the defaults.
+`--no-persist`, `--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to
+configure the runtime directory without a command-line argument; explicit
+configuration takes precedence over the defaults.
 
 ## Publishing
 
@@ -130,9 +162,9 @@ required.
 - `POST /api/clipboard/clear/` — delete all clipboard entries
 - `GET /files/<path>` — download a shared file (path-traversal protected)
 
-Clipboard entries are stored as plain-text JSON lines in
-`~/.vaalboks/shared/clipboard.jsonl` (or the checkout-local
-`vaalboks-data/shared/clipboard.jsonl`, or the configured shared root). The
-browser uses explicit Paste and Copy buttons because browser clipboard access
-requires user permission. The file inherits the same local-network privacy
-model as other shared files.
+Clipboard entries are stored transactionally in the Django database and are
+included in the app's migrations. The browser uses explicit Paste and Copy
+buttons because browser clipboard access requires user permission. Clipboard
+history has the same 100-entry and 10 MB limits as before, and it inherits the
+same local-network privacy model as other shared files. JSONL clipboard files
+are not read by the database-backed implementation.
