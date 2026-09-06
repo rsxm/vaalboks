@@ -7,6 +7,7 @@ from pathlib import Path
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.cache import patch_vary_headers
 
 ROOM_SESSION_KEY = "vaalboks_room"
 
@@ -34,7 +35,11 @@ def room_key_required(view):
         async def async_wrapper(request, *args, **kwargs):
             if room_keys_enabled() and not request.session.get(ROOM_SESSION_KEY):
                 return HttpResponseRedirect(reverse("vaalboks:room"))
-            return await view(request, *args, **kwargs)
+            response = await view(request, *args, **kwargs)
+            if room_keys_enabled():
+                response["Cache-Control"] = "private, no-store"
+                patch_vary_headers(response, ["Cookie"])
+            return response
 
         return async_wrapper
 
@@ -42,6 +47,10 @@ def room_key_required(view):
     def wrapper(request, *args, **kwargs):
         if room_keys_enabled() and not request.session.get(ROOM_SESSION_KEY):
             return HttpResponseRedirect(reverse("vaalboks:room"))
-        return view(request, *args, **kwargs)
+        response = view(request, *args, **kwargs)
+        if room_keys_enabled():
+            response["Cache-Control"] = "private, no-store"
+            patch_vary_headers(response, ["Cookie"])
+        return response
 
     return wrapper

@@ -139,6 +139,7 @@ def room(request):
             return render(
                 request, "vaalboks/login.html", {"error": "Enter a room phrase."}, status=400
             )
+        request.session.cycle_key()
         request.session[ROOM_SESSION_KEY] = room_digest(phrase)
         request.session.set_expiry(getattr(settings, "VAALBOKS_SESSION_AGE", 12 * 60 * 60))
         request.session.save()

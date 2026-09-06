@@ -41,6 +41,21 @@ class SharingTests(TestCase):
         other_client.post("/room/", {"phrase": "another room"})
         self.assertEqual(other_client.get("/api/clipboard/").json()["entries"], [])
 
+    @override_settings(VAALBOKS_ROOM_KEYS=True, SECRET_KEY="test-secret")
+    def test_room_entry_rotates_session_and_disables_shared_caching(self):
+        session = self.client.session
+        session["preauth"] = "value"
+        session.save()
+        old_key = session.session_key
+
+        self.client.post("/room/", {"phrase": "temporary room"})
+        self.assertNotEqual(self.client.session.session_key, old_key)
+
+        response = self.client.get("/", HTTP_ACCEPT_ENCODING="zstd")
+        self.assertIn("cookie", response["Vary"].lower())
+        self.assertIn("accept-encoding", response["Vary"].lower())
+        self.assertEqual(response["Cache-Control"], "private, no-store")
+
     @override_settings(VAALBOKS_ROOM_KEYS=True)
     def test_room_login_rejects_blank_phrase(self):
         response = self.client.post("/room/", {"phrase": " "})
