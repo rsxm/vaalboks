@@ -5,6 +5,8 @@ from . import views
 app_name = "vaalboks"
 
 urlpatterns = [
+    path("room/", views.room, name="room"),
+    path("room/leave/", views.leave_room, name="leave-room"),
     path("", views.index, name="index"),
     path("api/files/", views.list_files, name="list-files"),
     path("api/upload/", views.upload, name="upload"),

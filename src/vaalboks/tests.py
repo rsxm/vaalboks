@@ -22,7 +22,56 @@ def storage_settings(root: Path) -> dict:
     }
 
 
+@override_settings(VAALBOKS_ROOM_KEYS=False)
 class SharingTests(TestCase):
+    @override_settings(VAALBOKS_ROOM_KEYS=True, SECRET_KEY="test-secret")
+    def test_room_access_requires_phrase_and_isolates_storage(self):
+        self.assertEqual(self.client.get("/").status_code, 302)
+        self.assertEqual(self.client.get("/api/clipboard/").status_code, 302)
+
+        response = self.client.post("/room/", {"phrase": "short-lived room"})
+        self.assertRedirects(response, "/")
+        self.client.post(
+            "/api/clipboard/add/",
+            data=json.dumps({"text": "private"}),
+            content_type="application/json",
+        )
+
+        other_client = self.client_class()
+        other_client.post("/room/", {"phrase": "another room"})
+        self.assertEqual(other_client.get("/api/clipboard/").json()["entries"], [])
+
+    @override_settings(VAALBOKS_ROOM_KEYS=True, SECRET_KEY="test-secret")
+    def test_room_entry_rotates_session_and_disables_shared_caching(self):
+        session = self.client.session
+        session["preauth"] = "value"
+        session.save()
+        old_key = session.session_key
+
+        self.client.post("/room/", {"phrase": "temporary room"})
+        self.assertNotEqual(self.client.session.session_key, old_key)
+
+        response = self.client.get("/", HTTP_ACCEPT_ENCODING="zstd")
+        self.assertIn("cookie", response["Vary"].lower())
+        self.assertIn("accept-encoding", response["Vary"].lower())
+        self.assertEqual(response["Cache-Control"], "private, no-store")
+
+    @override_settings(VAALBOKS_ROOM_KEYS=True)
+    def test_room_login_rejects_blank_phrase(self):
+        response = self.client.post("/room/", {"phrase": " "})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "Enter a room phrase.", status_code=400)
+
+    @override_settings(VAALBOKS_ROOM_KEYS=True)
+    def test_leaving_room_flushes_session(self):
+        self.client.post("/room/", {"phrase": "temporary room"})
+
+        response = self.client.post("/room/leave/")
+
+        self.assertRedirects(response, "/room/")
+        self.assertEqual(self.client.get("/").status_code, 302)
+
     def test_index_has_strict_csp_and_external_assets(self):
         response = self.client.get("/")
 
@@ -113,6 +162,7 @@ class SharingTests(TestCase):
             self.client.get("/api/files/")
 
 
+@override_settings(VAALBOKS_ROOM_KEYS=False)
 class ClipboardTests(TestCase):
     def add(self, text: str) -> dict:
         response = self.client.post(

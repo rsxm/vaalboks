@@ -1,4 +1,5 @@
 import zstandard
+from django.utils.cache import patch_vary_headers
 
 
 class ZstdMiddleware:
@@ -32,6 +33,6 @@ class ZstdMiddleware:
                 response.content = self.compressor.compress(body)
                 response.headers["Content-Encoding"] = "zstd"
                 response.headers.pop("Content-Length", None)
-                response.headers["Vary"] = "Accept-Encoding"
+                patch_vary_headers(response, ["Accept-Encoding"])
 
         return response

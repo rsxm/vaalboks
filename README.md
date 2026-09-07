@@ -42,9 +42,16 @@ on Windows. Application errors include their traceback in the server's
 standard error log.
 
 For the easiest phone workflow, connect the phone and computer to the same
-Wi-Fi, scan the startup QR code, and open the displayed URL. With the default
-HTTPS mode, accept the self-signed certificate warning on the phone; use
-`--http` on a trusted home network if you want to avoid that warning.
+Wi-Fi, scan the startup QR code, and open the displayed URL. Choose a room
+phrase when prompted, then use the same phrase on each device that should share
+files. The phrase creates an isolated room; it is not a user account. The
+browser gives stronger guidance for longer phrases, but a phrase alone is not
+sufficient for public-internet exposure.
+
+With the default HTTPS mode, accept the self-signed certificate warning on the
+phone; use `--http` on a trusted home network if you want to avoid that
+warning. Room sessions expire after 12 hours. Set `DJANGO_SECRET_KEY` if a
+room must remain addressable after restarting the server.
 
 When running from this checkout:
 
