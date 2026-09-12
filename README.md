@@ -6,18 +6,11 @@
 
 Vaalboks is a small file-sharing server for a local network. Drop files or
 folders in the browser, then download them from another device on the same
-network. It also supports sharing short text snippets between connected
-computers.
+network. It also supports sharing text snippets ("clipboard") between connected
+devices.
 
-The name is Afrikaans for “dull box” — a straightforward tool for moving files
-between computers without a separate hosted service.
-
-## Stack
-
-- Python 3.14, Django 6.1, uv
-- Frontend: plain HTML/CSS/JS + htmx 4.0
-- Uploads use XHR for live progress and speed tracking; downloads use streaming
-  `fetch`
+The name is Afrikaans for a “dull box” — nothing fancy, just a basic tool for
+moving files between devices without an external hosted service.
 
 ## Run
 
@@ -27,159 +20,50 @@ To use vaalboks, install `uv` and run:
 uvx vaalboks
 ```
 
-`uvx` downloads and runs the package without requiring a checkout or a
-separate package installation. The command starts HTTPS on `0.0.0.0:8443`
-with two workers. Runtime data is stored in `~/.vaalboks` when run outside a
-Git checkout, and in `./vaalboks-data` when run from this repository. A
-self-signed certificate is generated there on first launch. Migrations and
-static-file collection run automatically. At startup, the CLI prints the
-server's local-network URL(s) and a terminal QR code for the first URL. Use
-`--no-qr` to hide the QR code. Use `--http` for plain HTTP on port 8123. The
-`--no-persist` flag keeps the SQLite database and shared files in memory for
-the current run and automatically uses one worker. In-memory data is lost
-when the process exits. The CLI uses Gunicorn on Linux and macOS and Uvicorn
-on Windows. Application errors include their traceback in the server's
-standard error log. Uploads are limited to 1 GB per request by default, and
-room-entry attempts are limited to 10 per client address per minute.
+By default, vaalboks:
+
+- Starts an HTTPS server on `0.0.0.0:8443` with two workers.
+- Persists the SQLite database and shared files in `~/.vaalboks` (or
+  `./vaalboks-data` when run from a checkout).
+- Generates a local self-signed certificate on first launch.
+- Prints the local-network URL and a QR code for that URL in the terminal.
+- Uses a room phrase to isolate shared files between devices.
+- Keeps room sessions valid for 12 hours.
+
+Use `--http` only on a trusted network: room phrases, session cookies, uploads,
+and downloads are then sent without transport encryption. Use `--no-persist`
+for an ephemeral single-worker session; its database and shared files are lost
+when the process exits.
+
+![vaalboks application preview](docs/assets/application-preview.svg)
 
 For the easiest phone workflow, connect the phone and computer to the same
 Wi-Fi, scan the startup QR code, and open the displayed URL. Choose a room
 phrase when prompted, then use the same phrase on each device that should share
-files. The phrase creates an isolated room; it is not a user account. The
-browser gives stronger guidance for longer phrases, but a phrase alone is not
+files. The phrase creates an isolated room, but a phrase alone is not
 sufficient for public-internet exposure.
 
 With the default HTTPS mode, accept the self-signed certificate warning on the
-phone. The certificate and private key are generated with Python's
-`cryptography` package; no system OpenSSL command is required. Use `--http` on
-a trusted home network if you want to avoid the warning, understanding that
-room phrases, session cookies, uploads, and downloads are then sent without
-transport encryption and can be observed or modified by other devices on the
-network. Room sessions expire after 12 hours. Set `DJANGO_SECRET_KEY` if a
-room must remain addressable after restarting the server.
+phone.
 
-When running from this checkout:
+For advanced configuration, including running from a checkout, direct
+Gunicorn deployment, and Django integration, see the
+[documentation](docs/).
 
-```sh
-uv run python manage.py runserver 0.0.0.0:8123
+For the HTTP API and storage behavior, see the [API and storage
+documentation](docs/API.md).
+
+Example startup output:
+
+```text
+Vaalboks is ready. Open one of these URLs:
+  https://<your-LAN-IP>:8443/
+
+Scan this QR code on your phone:
+  [QR code rendered here in the terminal]
 ```
 
-Then open `http://<your-LAN-IP>:8123/` from any device on the network.
-(Find your IP with `ipconfig getifaddr en0`.)
+## Built with
 
-## Use as a Django app
-
-The file-sharing interface can also be mounted in an existing Django project.
-Install `vaalboks`, add `vaalboks` to `INSTALLED_APPS`, configure the required
-`vaalboks` storage alias, run migrations, and include `vaalboks.urls`:
-
-```python
-# settings.py
-INSTALLED_APPS = [
-    # ...
-    "vaalboks",
-]
-
-STORAGES = {
-    # Keep the project's existing default/staticfiles aliases as appropriate.
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-    "vaalboks": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-        "OPTIONS": {"location": BASE_DIR / "shared"},
-    },
-}
-```
-
-```python
-# urls.py
-from django.urls import include, path
-
-urlpatterns = [
-    path("share/", include("vaalboks.urls")),
-]
-```
-
-The app does not require the bundled `vaalboks_server` settings, middleware,
-or server. The host project remains responsible for Django middleware, static
-files, CSRF, and deployment configuration.
-
-The app always uses `STORAGES["vaalboks"]`; it does not fall back to Django's
-default storage or call `storage.path()`. For quick, ephemeral sharing, Django
-also includes an in-memory storage backend:
-
-```python
-STORAGES = {
-    "vaalboks": {
-        "BACKEND": "django.core.files.storage.InMemoryStorage",
-    },
-}
-```
-
-In-memory files disappear when the server process stops and are not shared
-between multiple worker processes, so use it for short-lived single-process
-sharing. The bundled CLI uses persistent local file storage by default.
-
-File listings use the storage backend's logical `listdir()` operation. A
-backend must implement `listdir()` and `size()` for the browser listing to
-work. Directory names are logical storage paths, not local filesystem paths.
-
-## Direct Gunicorn HTTPS + zstd
-
-This section applies to Linux and macOS. Windows users should use the `vaalboks`
-command, which selects Uvicorn automatically.
-
-Gunicorn can terminate HTTPS, and Django compresses eligible text responses
-with zstd:
-
-```sh
-uv run gunicorn vaalboks_server.asgi:application \
-  --worker-class uvicorn_worker.UvicornWorker \
-  --workers 2 \
-  --bind 0.0.0.0:8443 \
-  --certfile certs/vaalboks-cert.pem \
-  --keyfile certs/vaalboks-key.pem
-```
-
-Open `https://<your-LAN-IP>:8443/` and trust the self-signed certificate on
-each device that will connect. This setup provides HTTPS and zstd compression.
-
-The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
-`--no-persist`, `--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to
-configure the runtime directory without a command-line argument; explicit
-configuration takes precedence over the defaults.
-The bundled server also supports `VAALBOKS_MAX_UPLOAD_BYTES`,
-`VAALBOKS_ROOM_ATTEMPT_LIMIT`, and `VAALBOKS_ROOM_ATTEMPT_WINDOW` environment
-settings for deployments that need different limits.
-
-## Publishing
-
-Build artifacts locally with:
-
-```sh
-uv build
-```
-
-The repository includes GitHub Actions for quality checks and publishing on a
-published GitHub release. Configure PyPI trusted publishing for the GitHub
-repository before creating the first release; no long-lived PyPI token is
-required.
-
-## How it works
-
-- `GET /` — single page with drop zone and live file listing
-- `GET /api/files/` — htmx partial that re-renders the listing after uploads
-- `POST /api/upload/` — multipart upload; folders are traversed client-side
-  (`webkitGetAsEntry`) and each file is sent with its relative path
-- `GET /api/clipboard/` — list shared clipboard entries
-- `POST /api/clipboard/add/` — append a text entry from the clipboard panel
-- `POST /api/clipboard/<id>/delete/` — delete one clipboard entry
-- `POST /api/clipboard/clear/` — delete all clipboard entries
-- `GET /files/<path>` — download a shared file (path-traversal protected)
-
-Clipboard entries are stored transactionally in the Django database and are
-included in the app's migrations. The browser uses explicit Paste and Copy
-buttons because browser clipboard access requires user permission. Clipboard
-history has the same 100-entry and 10 MB limits as before, and it inherits the
-same local-network privacy model as other shared files. JSONL clipboard files
-are not read by the database-backed implementation.
+- Python 3.14 and Django 6.1
+- Plain HTML, CSS, and JavaScript with HTMX
