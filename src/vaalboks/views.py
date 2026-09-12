@@ -13,7 +13,14 @@ from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from .access import ROOM_SESSION_KEY, room_digest, room_key_required, room_keys_enabled
+from .access import (
+    ROOM_SESSION_KEY,
+    room_attempt_allowed,
+    room_attempt_limited_response,
+    room_digest,
+    room_key_required,
+    room_keys_enabled,
+)
 from .clipboard import append_entry, clear_entries, delete_entry, list_entries
 
 
@@ -132,6 +139,8 @@ def room(request):
     if not room_keys_enabled():
         return HttpResponseRedirect(reverse("vaalboks:index"))
     if request.method == "POST":
+        if not room_attempt_allowed(request):
+            return room_attempt_limited_response()
         phrase = request.POST.get("phrase", "").strip()
         if not phrase:
             return render(
@@ -169,8 +178,17 @@ def upload(request):
     paths = request.POST.getlist("paths")
     if not files:
         return JsonResponse({"error": "no files"}, status=400)
+    if len(files) != len(paths):
+        return JsonResponse({"error": "each file must have a matching path"}, status=400)
+    max_bytes = getattr(settings, "VAALBOKS_MAX_UPLOAD_BYTES", 1_000_000_000)
+    total_bytes = sum(uploaded_file.size for uploaded_file in files)
+    if total_bytes > max_bytes:
+        return JsonResponse(
+            {"error": f"uploads must total at most {max_bytes} bytes"},
+            status=413,
+        )
     saved = 0
-    for uploaded_file, relpath in zip(files, paths, strict=True):
+    for uploaded_file, relpath in zip(files, paths):
         relpath = _safe_relpath(relpath.lstrip("/") or uploaded_file.name)
         storage_path = _scoped_path(request, relpath)
         if storage.exists(storage_path):

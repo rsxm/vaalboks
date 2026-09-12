@@ -39,7 +39,8 @@ server's local-network URL(s) and a terminal QR code for the first URL. Use
 the current run and automatically uses one worker. In-memory data is lost
 when the process exits. The CLI uses Gunicorn on Linux and macOS and Uvicorn
 on Windows. Application errors include their traceback in the server's
-standard error log.
+standard error log. Uploads are limited to 1 GB per request by default, and
+room-entry attempts are limited to 10 per client address per minute.
 
 For the easiest phone workflow, connect the phone and computer to the same
 Wi-Fi, scan the startup QR code, and open the displayed URL. Choose a room
@@ -147,6 +148,9 @@ The CLI also accepts `--host`, `--port`, `--workers`, `--data-dir`,
 `--no-persist`, `--certfile`, and `--keyfile`. Set `VAALBOKS_DATA_DIR` to
 configure the runtime directory without a command-line argument; explicit
 configuration takes precedence over the defaults.
+The bundled server also supports `VAALBOKS_MAX_UPLOAD_BYTES`,
+`VAALBOKS_ROOM_ATTEMPT_LIMIT`, and `VAALBOKS_ROOM_ATTEMPT_WINDOW` environment
+settings for deployments that need different limits.
 
 ## Publishing
 

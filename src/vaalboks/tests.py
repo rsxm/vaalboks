@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -61,6 +62,21 @@ class SharingTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "Enter a room phrase.", status_code=400)
+
+    @override_settings(
+        VAALBOKS_ROOM_KEYS=True,
+        VAALBOKS_ROOM_ATTEMPT_LIMIT=1,
+        VAALBOKS_ROOM_ATTEMPT_WINDOW=60,
+    )
+    def test_room_login_throttles_repeated_attempts(self):
+        cache.clear()
+        try:
+            self.assertEqual(self.client.post("/room/", {"phrase": "first"}).status_code, 302)
+            response = self.client.post("/room/", {"phrase": "second"})
+        finally:
+            cache.clear()
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response["Retry-After"], "60")
 
     @override_settings(VAALBOKS_ROOM_KEYS=True)
     def test_leaving_room_flushes_session(self):
@@ -126,6 +142,32 @@ class SharingTests(TestCase):
             self.assertEqual(self.client.post("/api/upload/", payload).status_code, 200)
             response = self.client.get("/files/same.txt")
             self.assertEqual(b"".join(response.streaming_content), b"second")
+
+    def test_upload_rejects_mismatched_paths(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            override_settings(STORAGES=storage_settings(Path(directory))),
+        ):
+            response = self.client.post(
+                "/api/upload/",
+                {"files": SimpleUploadedFile("orphan.txt", b"data"), "paths": []},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "each file must have a matching path")
+
+    def test_upload_rejects_excessive_total_size(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            override_settings(
+                STORAGES=storage_settings(Path(directory)),
+                VAALBOKS_MAX_UPLOAD_BYTES=3,
+            ),
+        ):
+            response = self.client.post(
+                "/api/upload/",
+                {"files": SimpleUploadedFile("large.txt", b"data"), "paths": "large.txt"},
+            )
+        self.assertEqual(response.status_code, 413)
 
     def test_listing_filters_hidden_and_internal_files(self):
         with tempfile.TemporaryDirectory() as directory:
