@@ -31,7 +31,20 @@ jobs:
       - name: ty
         run: uv run ty check
       - name: Django tests
-        run: uv run python manage.py test
+        run: uv run python manage.py test vaalboks vaalboks_server
+      - name: Packaged server smoke test
+        run: |
+          uv run vaalboks --http --no-qr --data-dir "$RUNNER_TEMP/vaalboks" > "$RUNNER_TEMP/vaalboks.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8123/room/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/vaalboks.log"
+          exit 1
       - name: Install Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:

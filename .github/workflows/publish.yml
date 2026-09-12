@@ -20,6 +20,11 @@ jobs:
         with:
           version: 0.11.33
       - run: uv python install 3.14
+      - name: Verify package version matches release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          uv run python -c 'import os, tomllib; version = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]; tag = os.environ["RELEASE_TAG"]; assert tag == f"v{version}", f"release tag {tag!r} does not match package version {version!r}"'
       - run: uv build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

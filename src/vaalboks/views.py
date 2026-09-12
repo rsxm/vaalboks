@@ -1,21 +1,26 @@
-import asyncio
 import json
 import mimetypes
 from collections.abc import Iterable
 from pathlib import PurePosixPath
-from typing import BinaryIO
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import Storage, storages
 from django.core.files.storage.handler import InvalidStorageError
-from django.http import Http404, HttpResponseRedirect, JsonResponse, StreamingHttpResponse
+from django.http import FileResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from .access import ROOM_SESSION_KEY, room_digest, room_key_required, room_keys_enabled
+from .access import (
+    ROOM_SESSION_KEY,
+    room_attempt_allowed,
+    room_attempt_limited_response,
+    room_digest,
+    room_key_required,
+    room_keys_enabled,
+)
 from .clipboard import append_entry, clear_entries, delete_entry, list_entries
 
 
@@ -134,6 +139,8 @@ def room(request):
     if not room_keys_enabled():
         return HttpResponseRedirect(reverse("vaalboks:index"))
     if request.method == "POST":
+        if not room_attempt_allowed(request):
+            return room_attempt_limited_response()
         phrase = request.POST.get("phrase", "").strip()
         if not phrase:
             return render(
@@ -171,8 +178,17 @@ def upload(request):
     paths = request.POST.getlist("paths")
     if not files:
         return JsonResponse({"error": "no files"}, status=400)
+    if len(files) != len(paths):
+        return JsonResponse({"error": "each file must have a matching path"}, status=400)
+    max_bytes = getattr(settings, "VAALBOKS_MAX_UPLOAD_BYTES", 1_000_000_000)
+    total_bytes = sum(uploaded_file.size for uploaded_file in files)
+    if total_bytes > max_bytes:
+        return JsonResponse(
+            {"error": f"uploads must total at most {max_bytes} bytes"},
+            status=413,
+        )
     saved = 0
-    for uploaded_file, relpath in zip(files, paths, strict=True):
+    for uploaded_file, relpath in zip(files, paths):
         relpath = _safe_relpath(relpath.lstrip("/") or uploaded_file.name)
         storage_path = _scoped_path(request, relpath)
         if storage.exists(storage_path):
@@ -220,33 +236,23 @@ def clipboard_clear(request):
 
 
 @room_key_required
-async def download(request, relpath: str):
+def download(request, relpath: str):
     relpath = _safe_relpath(relpath)
     storage = _storage()
     storage_path = _scoped_path(request, relpath)
     if not storage.exists(storage_path):
         raise Http404("Not a file")
 
-    def open_binary() -> BinaryIO:
-        return storage.open(storage_path, "rb")
-
     try:
-        file = await asyncio.to_thread(open_binary)
+        file = storage.open(storage_path, "rb")
     except FileNotFoundError, IsADirectoryError, NotADirectoryError:
         raise Http404("Not a file") from None
 
-    async def file_chunks():
-        try:
-            while chunk := await asyncio.to_thread(file.read, 1024 * 1024):
-                yield chunk
-        finally:
-            await asyncio.to_thread(file.close)
-
     filename = PurePosixPath(relpath).name
-    response = StreamingHttpResponse(
-        file_chunks(),
+    response = FileResponse(
+        file,
+        as_attachment=True,
+        filename=filename,
         content_type=mimetypes.guess_type(filename)[0] or "application/octet-stream",
     )
-    response["Content-Length"] = storage.size(storage_path)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response

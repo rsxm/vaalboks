@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">vaalboks application preview</title>
+  <desc id="desc">Preview of the vaalboks local file-sharing interface.</desc>
+  <rect width="1200" height="820" fill="#eef0f3"/>
+  <rect x="190" y="36" width="820" height="748" rx="18" fill="#fff" stroke="#d7dbe1" stroke-width="3"/>
+  <text x="600" y="92" text-anchor="middle" fill="#222831" font-family="system-ui, sans-serif" font-size="34" font-weight="700">vaalboks</text>
+  <text x="600" y="121" text-anchor="middle" fill="#68707c" font-family="system-ui, sans-serif" font-size="15">local file share</text>
+  <rect x="814" y="74" width="148" height="38" rx="8" fill="#eef0f3"/>
+  <text x="888" y="98" text-anchor="middle" fill="#404752" font-family="system-ui, sans-serif" font-size="14">Leave room</text>
+  <rect x="246" y="155" width="708" height="188" rx="12" fill="#f7f8fa" stroke="#d7dbe1" stroke-width="2"/>
+  <text x="276" y="190" fill="#222831" font-family="system-ui, sans-serif" font-size="20" font-weight="600">Shared clipboard</text>
+  <rect x="276" y="211" width="648" height="55" rx="7" fill="#fff" stroke="#d7dbe1"/>
+  <text x="295" y="245" fill="#9098a4" font-family="system-ui, sans-serif" font-size="16">Type or paste text…</text>
+  <rect x="276" y="282" width="82" height="34" rx="7" fill="#4f6f8f"/>
+  <text x="317" y="304" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="14">Share</text>
+  <rect x="246" y="372" width="708" height="146" rx="12" fill="#f7f8fa" stroke="#7b9bb8" stroke-width="3" stroke-dasharray="9 8"/>
+  <text x="600" y="435" text-anchor="middle" fill="#222831" font-family="system-ui, sans-serif" font-size="24" font-weight="600">Drop files or folders here</text>
+  <text x="600" y="466" text-anchor="middle" fill="#68707c" font-family="system-ui, sans-serif" font-size="16">or click to browse</text>
+  <rect x="246" y="548" width="708" height="42" rx="7" fill="#eef0f3"/>
+  <text x="270" y="574" fill="#68707c" font-family="system-ui, sans-serif" font-size="14">↑ uploaded 0 B</text>
+  <text x="450" y="574" fill="#68707c" font-family="system-ui, sans-serif" font-size="14">↓ downloaded 0 B</text>
+  <text x="660" y="574" fill="#68707c" font-family="system-ui, sans-serif" font-size="14">last upload –</text>
+  <text x="820" y="574" fill="#68707c" font-family="system-ui, sans-serif" font-size="14">last download –</text>
+  <rect x="246" y="620" width="708" height="110" rx="10" fill="#fff" stroke="#d7dbe1"/>
+  <text x="276" y="658" fill="#222831" font-family="system-ui, sans-serif" font-size="17" font-weight="600">Shared files</text>
+  <text x="276" y="695" fill="#68707c" font-family="system-ui, sans-serif" font-size="15">Files you upload appear here for devices in this room.</text>
+</svg>

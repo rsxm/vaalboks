@@ -25,6 +25,7 @@ NO_PERSIST = os.environ.get("VAALBOKS_NO_PERSIST", "").lower() in {
     "yes",
     "on",
 }
+HTTP_ONLY = os.environ.get("VAALBOKS_HTTP", "false").lower() in {"1", "true", "yes", "on"}
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,8 +39,13 @@ DEBUG = os.environ.get("VAALBOKS_DEBUG", "").lower() in {"1", "true", "yes", "on
 
 # Local-network file sharing: accept any LAN host
 ALLOWED_HOSTS = ["*"]
+SESSION_COOKIE_SECURE = not HTTP_ONLY
+CSRF_COOKIE_SECURE = not HTTP_ONLY
 VAALBOKS_ROOM_KEYS = True
 VAALBOKS_SESSION_AGE = 12 * 60 * 60
+VAALBOKS_ROOM_ATTEMPT_LIMIT = 10
+VAALBOKS_ROOM_ATTEMPT_WINDOW = 60
+VAALBOKS_MAX_UPLOAD_BYTES = 1_000_000_000
 
 LOGGING = {
     "version": 1,
@@ -220,15 +226,5 @@ STORAGES = {
     ),
 }
 
-# Allow large uploads on the LAN
-DATA_UPLOAD_MAX_NUMBER_FILES = None
-
-
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
-    },
-}
+# Allow large uploads on the LAN while bounding resource use.
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000
