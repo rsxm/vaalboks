@@ -49,8 +49,12 @@ browser gives stronger guidance for longer phrases, but a phrase alone is not
 sufficient for public-internet exposure.
 
 With the default HTTPS mode, accept the self-signed certificate warning on the
-phone; use `--http` on a trusted home network if you want to avoid that
-warning. Room sessions expire after 12 hours. Set `DJANGO_SECRET_KEY` if a
+phone. The certificate and private key are generated with Python's
+`cryptography` package; no system OpenSSL command is required. Use `--http` on
+a trusted home network if you want to avoid the warning, understanding that
+room phrases, session cookies, uploads, and downloads are then sent without
+transport encryption and can be observed or modified by other devices on the
+network. Room sessions expire after 12 hours. Set `DJANGO_SECRET_KEY` if a
 room must remain addressable after restarting the server.
 
 When running from this checkout:

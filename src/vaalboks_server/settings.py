@@ -25,6 +25,7 @@ NO_PERSIST = os.environ.get("VAALBOKS_NO_PERSIST", "").lower() in {
     "yes",
     "on",
 }
+HTTP_ONLY = os.environ.get("VAALBOKS_HTTP", "false").lower() in {"1", "true", "yes", "on"}
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +39,8 @@ DEBUG = os.environ.get("VAALBOKS_DEBUG", "").lower() in {"1", "true", "yes", "on
 
 # Local-network file sharing: accept any LAN host
 ALLOWED_HOSTS = ["*"]
+SESSION_COOKIE_SECURE = not HTTP_ONLY
+CSRF_COOKIE_SECURE = not HTTP_ONLY
 VAALBOKS_ROOM_KEYS = True
 VAALBOKS_SESSION_AGE = 12 * 60 * 60
 

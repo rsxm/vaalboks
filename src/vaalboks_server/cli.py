@@ -159,6 +159,7 @@ def main() -> None:
     if args.no_persist:
         os.environ["VAALBOKS_NO_PERSIST"] = "true"
         args.workers = 1
+    os.environ["VAALBOKS_HTTP"] = "true" if args.http else "false"
 
     if args.data_dir:
         os.environ["VAALBOKS_DATA_DIR"] = str(args.data_dir.expanduser().resolve())

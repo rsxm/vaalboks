@@ -30,9 +30,6 @@ main {
   border: 1px solid var(--border);
   border-radius: 12px;
 }
-.access-panel h1 {
-  margin-top: 0;
-}
 .access-panel label {
   display: block;
   margin: 1rem 0 0.35rem;
@@ -70,6 +67,9 @@ main {
 h1 {
   font-size: 1.05rem;
   margin: 0 0 1.25rem;
+}
+.access-panel h1 {
+  margin-top: 0;
 }
 .page-heading {
   display: flex;

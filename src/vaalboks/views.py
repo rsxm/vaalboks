@@ -1,15 +1,13 @@
-import asyncio
 import json
 import mimetypes
 from collections.abc import Iterable
 from pathlib import PurePosixPath
-from typing import BinaryIO
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import Storage, storages
 from django.core.files.storage.handler import InvalidStorageError
-from django.http import Http404, HttpResponseRedirect, JsonResponse, StreamingHttpResponse
+from django.http import FileResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -220,33 +218,23 @@ def clipboard_clear(request):
 
 
 @room_key_required
-async def download(request, relpath: str):
+def download(request, relpath: str):
     relpath = _safe_relpath(relpath)
     storage = _storage()
     storage_path = _scoped_path(request, relpath)
     if not storage.exists(storage_path):
         raise Http404("Not a file")
 
-    def open_binary() -> BinaryIO:
-        return storage.open(storage_path, "rb")
-
     try:
-        file = await asyncio.to_thread(open_binary)
+        file = storage.open(storage_path, "rb")
     except FileNotFoundError, IsADirectoryError, NotADirectoryError:
         raise Http404("Not a file") from None
 
-    async def file_chunks():
-        try:
-            while chunk := await asyncio.to_thread(file.read, 1024 * 1024):
-                yield chunk
-        finally:
-            await asyncio.to_thread(file.close)
-
     filename = PurePosixPath(relpath).name
-    response = StreamingHttpResponse(
-        file_chunks(),
+    response = FileResponse(
+        file,
+        as_attachment=True,
+        filename=filename,
         content_type=mimetypes.guess_type(filename)[0] or "application/octet-stream",
     )
-    response["Content-Length"] = storage.size(storage_path)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response

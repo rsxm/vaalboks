@@ -3,7 +3,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from asgiref.sync import async_to_sync
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -81,6 +80,14 @@ class SharingTests(TestCase):
         self.assertNotContains(response, "<style")
         self.assertNotContains(response, ' style="')
 
+    @override_settings(VAALBOKS_ROOM_KEYS=True)
+    def test_room_page_uses_external_script_for_strict_csp(self):
+        response = self.client.get("/room/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "/static/vaalboks/room.js")
+        self.assertNotContains(response, "<script>\n")
+
     def test_upload_listing_and_download_use_nested_storage_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -103,11 +110,10 @@ class SharingTests(TestCase):
 
                 response = self.client.get("/files/nested/hello.txt")
                 self.assertEqual(response.status_code, 200)
-
-                async def read_stream():
-                    return b"".join([chunk async for chunk in response.streaming_content])
-
-                self.assertEqual(async_to_sync(read_stream)(), b"hello")
+                self.assertEqual(b"".join(response.streaming_content), b"hello")
+                self.assertEqual(
+                    response["Content-Disposition"], 'attachment; filename="hello.txt"'
+                )
 
     def test_upload_collision_overwrites_existing_file(self):
         with (
@@ -119,11 +125,7 @@ class SharingTests(TestCase):
             payload = {"files": SimpleUploadedFile("same.txt", b"second"), "paths": "same.txt"}
             self.assertEqual(self.client.post("/api/upload/", payload).status_code, 200)
             response = self.client.get("/files/same.txt")
-
-            async def read_stream():
-                return b"".join([chunk async for chunk in response.streaming_content])
-
-            self.assertEqual(async_to_sync(read_stream)(), b"second")
+            self.assertEqual(b"".join(response.streaming_content), b"second")
 
     def test_listing_filters_hidden_and_internal_files(self):
         with tempfile.TemporaryDirectory() as directory:

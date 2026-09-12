@@ -31,7 +31,7 @@ jobs:
       - name: ty
         run: uv run ty check
       - name: Django tests
-        run: uv run python manage.py test
+        run: uv run python manage.py test vaalboks vaalboks_server
       - name: Install Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:

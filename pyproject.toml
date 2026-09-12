@@ -1,6 +1,6 @@
 [project]
 name = "vaalboks"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple local-network file sharing over HTTPS"
 readme = "README.md"
 license = "MIT"
